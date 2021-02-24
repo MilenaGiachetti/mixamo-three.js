@@ -17,13 +17,27 @@ const canvas = document.querySelector('canvas.webgl')
 // Scene
 const scene = new THREE.Scene()
 
+// Loading Manager
+const manager = new THREE.LoadingManager();
+manager.onLoad = function ( ) {
+    // start animation loop & add eventListeners after loading
+    tick();
+    document.addEventListener("keydown", onDocumentKeyDown, false);
+    document.addEventListener("keyup", onDocumentKeyUp, false);
+    // hide loading screen
+    document.getElementById("loadingScreen").classList.add("fadeOut");
+};
+manager.onError = function ( url ) {
+	console.log( 'Error loading ' + url );
+};
+
 /************ Models & animations ************/
 let mixer = null
 let animationActions = {}
 let mannequin = null
 
 // Mannequin
-const fbxLoader = new FBXLoader();
+const fbxLoader = new FBXLoader(manager);
 fbxLoader.load("./models/Ch36_nonPBR.fbx", model => {
     mannequin = model
     mannequin.scale.set(0.05, 0.05, 0.05)
@@ -40,21 +54,22 @@ fbxLoader.load("./models/Ch36_nonPBR.fbx", model => {
     for(const animationToLoad of animationsToLoad){
         fbxLoader.load(`./models/animations/${animationToLoad}.fbx`,
             (object) => {
-                // console.log(`loaded ${animationToLoad}`)
                 let animationAction = mixer.clipAction((object).animations[0]);
-                animationActions[animationToLoad] = animationAction 
-                animationActions[animationToLoad].clampWhenFinished = true
+                animationActions[animationToLoad] = animationAction;
+                animationActions[animationToLoad].clampWhenFinished = true;
                 guiAnimations[animationToLoad] = () => {
-                    mixer.stopAllAction()
-                    animationActions[animationToLoad].play()
+                    mixer.stopAllAction();
+                    animationActions[animationToLoad].play();
                 }
-                animationsFolder.add(guiAnimations, animationToLoad)
+                animationsFolder.add(guiAnimations, animationToLoad);
+                if(animationToLoad == "idle"){
+                    animationActions.idle.play();
+                }
             }
         )
     }
 
     scene.add(mannequin);
-    camera.lookAt(mannequin.position.x, 8, mannequin.position.z);
 });
 
 /************ Floor ************/
@@ -109,7 +124,6 @@ window.addEventListener('resize', () => {
 /************ Camera ************/
 // Base camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-camera.position.set(- 8, 10, 8)
 scene.add(camera)
 
 // Orbit Controls
@@ -132,9 +146,6 @@ let modelState = {
 const danceArray = ['macarena', "wave", "swing"];
 let currentDance = null;
 
-document.addEventListener("keydown", onDocumentKeyDown, false);
-document.addEventListener("keyup", onDocumentKeyUp, false);
-
 function onDocumentKeyDown(event) {
     var keyCode = event.which;
     switch(keyCode) {
@@ -145,7 +156,6 @@ function onDocumentKeyDown(event) {
         case 32: // spacebar
             if(!modelState.dance) {
                 let random = Math.floor(Math.random() * danceArray.length);
-                console.log(random);
                 currentDance = danceArray[random];
                 animationActions[currentDance].play()
             }
@@ -330,5 +340,3 @@ const tick = () => {
     // Call tick again on the next frame
     window.requestAnimationFrame(tick)
 }
-
-tick()
