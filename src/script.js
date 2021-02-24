@@ -3,12 +3,16 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import * as dat from 'dat.gui';
+import Stats from 'three/examples/jsm/libs/stats.module';
 
 /************ Base ************/
 // Debug
 const gui = new dat.GUI();
 const guiAnimations = {};
 const animationsFolder = gui.addFolder("Animations");
+
+const stats = Stats();
+document.body.appendChild(stats.dom);
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl');
@@ -381,6 +385,8 @@ const tick = () => {
         // Update orbit controls
         orbitControls.update();
     }
+
+    stats.update();
 
     // Render
     renderer.render(scene, camera);
