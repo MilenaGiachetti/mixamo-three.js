@@ -2,14 +2,13 @@ import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js'
-
 import * as dat from 'dat.gui'
 
 /************ Base ************/
 // Debug
-const gui = new dat.GUI()
-const animationsFolder = gui.addFolder("Animations")
-const guiAnimations = {}
+const gui = new dat.GUI();
+const guiAnimations = {};
+const animationsFolder = gui.addFolder("Animations");
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
@@ -42,15 +41,8 @@ fbxLoader.load("./models/Ch36_nonPBR.fbx", model => {
     mannequin = model
     mannequin.scale.set(0.05, 0.05, 0.05)
     mixer = new THREE.AnimationMixer(mannequin);
-
-    // mixer.addEventListener( 'loop', function( e ) {
-    //     animationActions.walking.stop()
-    // } )
-
     // Mannequin animations
-    // let animationsToLoad = ["walking", "idle", "walking_backwards", "running", "walking_start", "walking_stop", "walking_turn_180"]
     let animationsToLoad = ["walking", "idle", "walking_backwards", "running", "left_turn", "right_turn", "macarena", "wave", "swing"];
-
     for(const animationToLoad of animationsToLoad){
         fbxLoader.load(`./models/animations/${animationToLoad}.fbx`,
             (object) => {
@@ -60,7 +52,7 @@ fbxLoader.load("./models/Ch36_nonPBR.fbx", model => {
                 guiAnimations[animationToLoad] = () => {
                     mixer.stopAllAction();
                     animationActions[animationToLoad].play();
-                }
+                };
                 animationsFolder.add(guiAnimations, animationToLoad);
                 if(animationToLoad == "idle"){
                     animationActions.idle.play();
@@ -68,7 +60,6 @@ fbxLoader.load("./models/Ch36_nonPBR.fbx", model => {
             }
         )
     }
-
     scene.add(mannequin);
 });
 
@@ -128,9 +119,6 @@ scene.add(camera)
 
 // Orbit Controls
 let orbitControls = null; 
-// new OrbitControls(camera, canvas)
-// orbitControls.target.set(0, 1, 0)
-// orbitControls.enableDamping = true
 
 /************ User Controls ************/
 let modelState = {
@@ -150,6 +138,12 @@ function onDocumentKeyDown(event) {
     var keyCode = event.which;
     switch(keyCode) {
         case 17: // control
+            if (!modelState.run){
+                if (modelState.forward){
+                    animationActions.running.weight = 1;
+                    animationActions.running.play()
+                } 
+            }
             modelState.dance = false;
             modelState.run = true;
             break;
@@ -171,9 +165,14 @@ function onDocumentKeyDown(event) {
             modelState.left = true;
             break;
         case 38: // up arrow
-            if(!modelState.forward) {
-                animationActions.walking.weight = 1;
-                animationActions.walking.play()
+            if (!modelState.forward){
+                if (modelState.run){
+                    animationActions.running.weight = 1;
+                    animationActions.running.play()
+                } else {
+                    animationActions.walking.weight = 1;
+                    animationActions.walking.play()
+                }
             }
             modelState.dance = false;
             modelState.forward = true;
@@ -194,9 +193,6 @@ function onDocumentKeyDown(event) {
             }
             modelState.dance = false;
             modelState.backward = true;
-            // mannequin.rotation.y = 0;
-            // animationActions.walking.play()
-            // mannequin.position.z += 6;
             break;
     }
 }
@@ -214,7 +210,6 @@ function onDocumentKeyUp(event) {
                     orbitControls.dispose();
                     orbitControls = null;
                 }
-                // orbitControls.target.set(camera.position);
             }
             break;
         case 17: // control
@@ -235,43 +230,65 @@ function onDocumentKeyUp(event) {
     }
 }
 
+function goToIdle(animation) {
+    if(animationActions[animation] && animationActions[animation].weight > 0) {
+        animationActions[animation].weight -= 0.2;
+    } else if (animationActions[animation]) {
+        animationActions[animation].stop;
+        animationActions.idle.play();
+    }
+}
+
 function updateMannequin(){
     // forward
     if(modelState.forward){
+        animationActions.idle.stop();
         let angle = - mannequin.rotation.y + Math.PI * 0.5;
-        mannequin.position.x +=  Math.cos(angle) * 0.1;
-        mannequin.position.z +=  Math.sin(angle) * 0.1;
-    } else if (animationActions.walking && animationActions.walking.weight > 0){
-        animationActions.walking.weight -= 0.1;
-    } else if(animationActions.walking){
-        animationActions.walking.stop()
-        animationActions.idle.play()
+        if(modelState.run){
+            animationActions.walking.weight = animationActions.walking.weight <= 0 ? 0 : animationActions.walking.weight - 0.2;
+            animationActions.running.weight = animationActions.running.weight >= 3 ? 3 :  animationActions.running.weight + 0.5;
+            mannequin.position.x +=  Math.cos(angle) * 0.5;
+            mannequin.position.z +=  Math.sin(angle) * 0.5;
+        } else {
+            animationActions.walking.weight = animationActions.walking.weight >= 3 ? 3 : animationActions.walking.weight + 0.2;
+            mannequin.position.x +=  Math.cos(angle) * 0.1;
+            mannequin.position.z +=  Math.sin(angle) * 0.1;
+        }
+    } else {
+        goToIdle("walking");
+        goToIdle("running");
+    }
+
+    // run
+    if(!modelState.run && animationActions.running && animationActions.running.weight > 0){
+        goToIdle("running");
+        if(modelState.forward){
+            animationActions.walking.weight = animationActions.walking.weight >= 1 ? 1 : animationActions.walking.weight + 0.2;
+        }
     }
 
     // backward
     if(modelState.backward){
+        animationActions.idle.stop();
         let angle = - mannequin.rotation.y + Math.PI * 0.5;
         mannequin.position.x -=  Math.cos(angle) * 0.1;
         mannequin.position.z -=  Math.sin(angle) * 0.1;
-    } else if (animationActions.walking_backwards && animationActions.walking_backwards.weight > 0){
-        animationActions.walking_backwards.weight -= 0.1;
-    } else if(animationActions.walking_backwards){
-        animationActions.walking_backwards.stop()
-        animationActions.idle.play()
+    } else {
+        goToIdle("walking_backwards");
     }
 
     // left
     if(modelState.left){
         mannequin.rotation.y += Math.PI * 0.01;
         if (animationActions.left_turn && (modelState.backward || modelState.forward)){
-            animationActions.left_turn.stop()
-        } else if(!(modelState.backward || modelState.forward)){
-            animationActions.left_turn.weight = 1;
+            animationActions.left_turn.stop();
+        } else {
+            animationActions.left_turn.weight = animationActions.left_turn.weight >= 3 ? 3 :  animationActions.left_turn.weight + 0.2;
             animationActions.left_turn.timeScale = 1.5/1;
             animationActions.left_turn.play();
         }
-    } else if (animationActions.left_turn){
-        animationActions.left_turn.stop()
+    } else {
+        goToIdle("left_turn");
     }
 
     // right
@@ -279,13 +296,14 @@ function updateMannequin(){
         mannequin.rotation.y -= Math.PI * 0.01;
         if (animationActions.right_turn && (modelState.backward || modelState.forward)){
             animationActions.right_turn.stop()
-        } else if(!(modelState.backward || modelState.forward)){
-            animationActions.right_turn.weight = 1;
-            animationActions.right_turn.timeScale = 1.5/1;
+        } else {
+            animationActions.right_turn.weight = animationActions.right_turn.weight >= 3 ? 3 :  animationActions.right_turn.weight + 0.2;
+            animationActions.right_turn.timeScale = 2/1;
             animationActions.right_turn.play();
         }
-    } else if (animationActions.right_turn){
+    } else {
         animationActions.right_turn.stop()
+        goToIdle("right_turn");
     }
 
     // dance
@@ -317,7 +335,7 @@ const tick = () => {
         // Model update
         updateMannequin()
     }
-    
+
     // Update camera
     if (modelState.autoCamera){
         if(mannequin){
