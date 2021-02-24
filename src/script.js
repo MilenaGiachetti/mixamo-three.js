@@ -39,7 +39,14 @@ let mannequin = null;
 const fbxLoader = new FBXLoader(manager);
 fbxLoader.load("./models/Ch36_nonPBR.fbx", model => {
     mannequin = model;
-    mannequin.scale.set(0.05, 0.05, 0.05);
+    mannequin.traverse( 
+        function(node) { 
+            if(node instanceof THREE.Mesh) { 
+                node.castShadow = true; 
+            } 
+        } 
+    );
+    mannequin.scale.set(0.01, 0.01, 0.01);
     mixer = new THREE.AnimationMixer(mannequin);
     // Mannequin animations
     let animationsToLoad = ["walking", "idle", "walking_backwards", "running", "left_turn", "right_turn", "macarena", "wave", "swing"];
@@ -84,13 +91,40 @@ scene.add(ambientLight);
 const directionalLight = new THREE.DirectionalLight(0xFDF4DC, 0.6);
 directionalLight.castShadow = true;
 directionalLight.shadow.mapSize.set(1024, 1024);
-directionalLight.shadow.camera.far = 15;
-directionalLight.shadow.camera.left = - 7;
-directionalLight.shadow.camera.top = 7;
-directionalLight.shadow.camera.right = 7;
-directionalLight.shadow.camera.bottom = - 7;
-directionalLight.position.set(5, 5, 5);
+directionalLight.shadow.camera.far = 65;
+directionalLight.shadow.camera.left = - 35;
+directionalLight.shadow.camera.top = 20;
+directionalLight.shadow.camera.right = 35;
+directionalLight.shadow.camera.bottom = - 20;
+directionalLight.position.set(20, 15, 20);
 scene.add(directionalLight);
+
+// gui
+function updateCamera() {
+    // update the light target's matrixWorld because it's needed by the helper
+    directionalLight.target.updateMatrixWorld();
+    directionalLightHelper.update();
+    // update the light's shadow camera's projection matrix
+    directionalLight.shadow.camera.updateProjectionMatrix();
+    // and now update the camera helper we're using to show the light's shadow camera
+    shadowCameraHelper.update();
+}
+
+const lightsFolder = gui.addFolder("Lights");
+lightsFolder.add(directionalLight, 'intensity').step(0.1).min(0);
+lightsFolder.add(directionalLight.shadow.camera, 'far').step(1).onChange(updateCamera);
+lightsFolder.add(directionalLight.shadow.camera, 'left').step(1).onChange(updateCamera);
+lightsFolder.add(directionalLight.shadow.camera, 'top').step(1).onChange(updateCamera);
+lightsFolder.add(directionalLight.shadow.camera, 'right').step(1).onChange(updateCamera);
+lightsFolder.add(directionalLight.shadow.camera, 'bottom').step(1).onChange(updateCamera);
+lightsFolder.add(directionalLight.shadow.camera.position, 'x').step(1).onChange(updateCamera);
+lightsFolder.add(directionalLight.shadow.camera.position, 'y').step(1).onChange(updateCamera);
+lightsFolder.add(directionalLight.shadow.camera.position, 'z').step(1).onChange(updateCamera);
+
+// const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 2);
+// scene.add(directionalLightHelper);
+// let shadowCameraHelper = new THREE.CameraHelper( directionalLight.shadow.camera );
+// scene.add( shadowCameraHelper );
 
 /************ Sizes ************/
 const sizes = {
@@ -201,7 +235,7 @@ function onDocumentKeyUp(event) {
             modelState.autoCamera = !modelState.autoCamera;
             if(!modelState.autoCamera && !orbitControls) {
                 orbitControls = new OrbitControls(camera, canvas);
-                orbitControls.target = new THREE.Vector3(mannequin.position.x, 8, mannequin.position.z);
+                orbitControls.target = new THREE.Vector3(mannequin.position.x, 2, mannequin.position.z);
                 orbitControls.enableDamping = true;
             } else if(modelState.autoCamera && orbitControls) {                
                 orbitControls.dispose();
@@ -243,12 +277,12 @@ function updateMannequin() {
         if(modelState.run) {
             animationActions.walking.weight = animationActions.walking.weight <= 0 ? 0 : animationActions.walking.weight - 0.2;
             animationActions.running.weight = animationActions.running.weight >= 3 ? 3 :  animationActions.running.weight + 0.5;
-            mannequin.position.x +=  Math.cos(angle) * 0.5;
-            mannequin.position.z +=  Math.sin(angle) * 0.5;
-        } else {
-            animationActions.walking.weight = animationActions.walking.weight >= 3 ? 3 : animationActions.walking.weight + 0.2;
             mannequin.position.x +=  Math.cos(angle) * 0.1;
             mannequin.position.z +=  Math.sin(angle) * 0.1;
+        } else {
+            animationActions.walking.weight = animationActions.walking.weight >= 3 ? 3 : animationActions.walking.weight + 0.2;
+            mannequin.position.x +=  Math.cos(angle) * 0.025;
+            mannequin.position.z +=  Math.sin(angle) * 0.025;
         }
     } else {
         goToIdle("walking");
@@ -267,8 +301,8 @@ function updateMannequin() {
     if(modelState.backward) {
         animationActions.idle.stop();
         let angle = - mannequin.rotation.y + Math.PI * 0.5;
-        mannequin.position.x -=  Math.cos(angle) * 0.1;
-        mannequin.position.z -=  Math.sin(angle) * 0.1;
+        mannequin.position.x -=  Math.cos(angle) * 0.02;
+        mannequin.position.z -=  Math.sin(angle) * 0.02;
     } else {
         goToIdle("walking_backwards");
     }
@@ -337,11 +371,11 @@ const tick = () => {
         if(mannequin) {
             let angle = - (mannequin.rotation.y + Math.PI * 0.5);
             if (modelState.backward){
-                camera.position.lerp(new THREE.Vector3(mannequin.position.x + Math.cos(angle) * 15, 10,  mannequin.position.z + Math.sin(angle) * 15), 0.1);
+                camera.position.lerp(new THREE.Vector3(mannequin.position.x + Math.cos(angle) * 5, 4,  mannequin.position.z + Math.sin(angle) * 5), 0.1);
             } else {
-                camera.position.lerp(new THREE.Vector3(mannequin.position.x + Math.cos(angle) * 10, 10,  mannequin.position.z + Math.sin(angle) * 10), 0.1);
+                camera.position.lerp(new THREE.Vector3(mannequin.position.x + Math.cos(angle) * 3, 3,  mannequin.position.z + Math.sin(angle) * 3), 0.1);
             }
-            camera.lookAt(mannequin.position.x, 8 ,mannequin.position.z);
+            camera.lookAt(mannequin.position.x, 2 ,mannequin.position.z);
         }
     } else if(orbitControls) {
         // Update orbit controls
