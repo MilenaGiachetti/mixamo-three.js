@@ -96,7 +96,7 @@ fbxLoader.load("./models/Ch36_nonPBR.fbx", model => {
         )
     }
     // Add mannequin physic object
-    const mannequinObject = new CANNON.Box(new CANNON.Vec3(0.3, 1, 0.2));
+    const mannequinObject = new CANNON.Box(new CANNON.Vec3(0.5, 1, 0.5));
     mannequinBody = new CANNON.Body({
         mass: 5,
         position: new CANNON.Vec3(0, 1, 0),
@@ -165,9 +165,9 @@ seaFolder.add(seaMaterial.uniforms.uColorOffset, 'value').min(0).max(1).step(0.0
 seaFolder.add(seaMaterial.uniforms.uColorMultiplier, 'value').min(0).max(10).step(0.001).name('uColorMultiplier');
 
 /************ Island ************/
-const geometry = new THREE.PlaneGeometry(100, 100);
-const material = new THREE.MeshStandardMaterial({color: 0xcaad51});
-const island = new THREE.Mesh(geometry, material);
+const islandGeometry = new THREE.PlaneGeometry(100, 100);
+const islandMaterial = new THREE.MeshStandardMaterial({color: 0xcaad51});
+const island = new THREE.Mesh(islandGeometry, islandMaterial);
 island.rotation.x = - Math.PI * 0.5;
 island.receiveShadow = true;
 scene.add(island);
@@ -192,6 +192,44 @@ world.addBody(islandBody);
 // islandBody.mass = 0;
 // islandBody.addShape(islandShape);
 // world.addBody(islandBody);
+
+/************ Interactive elements ************/
+// Box
+const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
+const boxMaterial = new THREE.MeshStandardMaterial({color: 0x5e98c0});
+const box = new THREE.Mesh(boxGeometry, boxMaterial);
+box.receiveShadow = true;
+box.position.set(2, 0.5, 3);
+scene.add(box);
+
+const boxShape = new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5));
+const boxBody = new CANNON.Body({
+    mass: 1,
+    position: new CANNON.Vec3(2, 1, 3),
+    shape: boxShape,
+    material: defaultMaterial
+});
+boxBody.addShape(boxShape);
+world.addBody(boxBody);
+
+// Sphere - ball
+const sphereGeometry = new THREE.SphereGeometry(0.2, 8, 6);
+const sphereMaterial = new THREE.MeshStandardMaterial({color: 0x36b330});
+const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+sphere.receiveShadow = true;
+sphere.position.set(-2, 0.5, -3);
+scene.add(sphere);
+
+const sphereShape = new CANNON.Sphere(0.2);
+const sphereBody = new CANNON.Body({
+    mass: 0.1,
+    position: new CANNON.Vec3(-2, 1, -3),
+    shape: sphereShape,
+    material: defaultMaterial
+});
+sphereBody.addShape(sphereShape);
+world.addBody(sphereBody);
+
 
 /************ Lights ************/
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
@@ -484,6 +522,10 @@ const tick = () => {
         // Update physics
         world.step(1 / 60, deltaTime, 3);
         mannequin.position.set(mannequinBody.position.x, mannequinBody.position.y - 1.0, mannequinBody.position.z);
+        box.position.copy(boxBody.position);
+        box.quaternion.copy(boxBody.quaternion);
+
+        sphere.position.copy(sphereBody.position);
 
         if(modelState.autoCamera) {
             let angle = - (mannequin.rotation.y + Math.PI * 0.5);
