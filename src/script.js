@@ -10,7 +10,7 @@ import waterFragmentShader from './shaders/water/fragment.glsl'
 /************ Base ************/
 // Debug
 const gui = new dat.GUI();
-const debugObject = {}
+const debugObject = {};
 
 const guiAnimations = {};
 const animationsFolder = gui.addFolder("Animations");
@@ -23,6 +23,7 @@ const canvas = document.querySelector('canvas.webgl');
 
 // Scene
 const scene = new THREE.Scene();
+scene.background = new THREE.Color("#5e98c0");
 
 // Loading Manager
 const manager = new THREE.LoadingManager();
@@ -78,12 +79,12 @@ fbxLoader.load("./models/Ch36_nonPBR.fbx", model => {
     scene.add(mannequin);
 });
 
-/************ Floor ************/
+/************ Sea ************/
 // Colors
-debugObject.depthColor = '#5e98c0'
-debugObject.surfaceColor = '#daedf7'
+debugObject.depthColor = '#5e98c0';
+debugObject.surfaceColor = '#daedf7';
 
-const waterMaterial = new THREE.ShaderMaterial({
+const seaMaterial = new THREE.ShaderMaterial({
     // add shader to material
     vertexShader: waterVertexShader,
     fragmentShader: waterFragmentShader,
@@ -108,35 +109,45 @@ const waterMaterial = new THREE.ShaderMaterial({
         uColorOffset: { value: 0.08 },
         uColorMultiplier: { value: 1 }
     }
-})
+});
 
-const floor = new THREE.Mesh(
+const sea = new THREE.Mesh(
     new THREE.RingGeometry( 20, 100, 512, 512 ),
     // new THREE.PlaneGeometry(50, 50, 512, 512),
-    waterMaterial
+    seaMaterial
 );
-floor.receiveShadow = true;
-floor.rotation.x = - Math.PI * 0.5;
-scene.add(floor);
+sea.position.y = -10;
+sea.rotation.x = - Math.PI * 0.5;
+scene.add(sea);
 
-gui.add(waterMaterial.uniforms.uBigWavesElevation, 'value').min(0).max(1).step(0.001).name('uBigWavesElevation')
-gui.add(waterMaterial.uniforms.uBigWavesFrequency, 'value').min(0).max(10).step(0.001).name('uBigWavesFrequency')
-gui.add(waterMaterial.uniforms.uBigWavesSpeed, 'value').min(0).max(10).step(0.001).name('uBigWavesSpeed')
-gui.add(waterMaterial.uniforms.uSmallWavesElevation, 'value').min(0).max(1).step(0.001).name('uSmallWavesElevation')
-gui.add(waterMaterial.uniforms.uSmallWavesFrequency, 'value').min(0).max(30).step(0.001).name('uSmallWavesFrequency')
-gui.add(waterMaterial.uniforms.uSmallWavesSpeed, 'value').min(0).max(4).step(0.001).name('uSmallWavesSpeed')
-gui.add(waterMaterial.uniforms.uSmallIterations, 'value').min(0).max(5).step(1).name('uSmallIterations')
+const seaFolder = gui.addFolder("Sea");
+seaFolder.add(seaMaterial.uniforms.uBigWavesElevation, 'value').min(0).max(1).step(0.001).name('uBigWavesElevation');
+seaFolder.add(seaMaterial.uniforms.uBigWavesFrequency, 'value').min(0).max(10).step(0.001).name('uBigWavesFrequency');
+seaFolder.add(seaMaterial.uniforms.uBigWavesSpeed, 'value').min(0).max(10).step(0.001).name('uBigWavesSpeed');
+seaFolder.add(seaMaterial.uniforms.uSmallWavesElevation, 'value').min(0).max(1).step(0.001).name('uSmallWavesElevation');
+seaFolder.add(seaMaterial.uniforms.uSmallWavesFrequency, 'value').min(0).max(30).step(0.001).name('uSmallWavesFrequency');
+seaFolder.add(seaMaterial.uniforms.uSmallWavesSpeed, 'value').min(0).max(4).step(0.001).name('uSmallWavesSpeed');
+seaFolder.add(seaMaterial.uniforms.uSmallIterations, 'value').min(0).max(5).step(1).name('uSmallIterations');
 
-gui.addColor(debugObject, 'depthColor').onChange(() => { waterMaterial.uniforms.uDepthColor.value.set(debugObject.depthColor) })
-gui.addColor(debugObject, 'surfaceColor').onChange(() => { waterMaterial.uniforms.uSurfaceColor.value.set(debugObject.surfaceColor) })
-gui.add(waterMaterial.uniforms.uColorOffset, 'value').min(0).max(1).step(0.001).name('uColorOffset')
-gui.add(waterMaterial.uniforms.uColorMultiplier, 'value').min(0).max(10).step(0.001).name('uColorMultiplier')
+seaFolder.addColor(debugObject, 'depthColor').onChange(() => {seaMaterial.uniforms.uDepthColor.value.set(debugObject.depthColor)});
+seaFolder.addColor(debugObject, 'surfaceColor').onChange(() => {seaMaterial.uniforms.uSurfaceColor.value.set(debugObject.surfaceColor)});
+seaFolder.add(seaMaterial.uniforms.uColorOffset, 'value').min(0).max(1).step(0.001).name('uColorOffset');
+seaFolder.add(seaMaterial.uniforms.uColorMultiplier, 'value').min(0).max(10).step(0.001).name('uColorMultiplier');
+
+/************ Island ************/
+const geometry = new THREE.SphereGeometry(75, 32, 32);
+const material = new THREE.MeshStandardMaterial({color: 0xcaad51});
+const island = new THREE.Mesh(geometry, material);
+island.position.y = -75;
+island.receiveShadow = true;
+scene.add(island);
+
 
 /************ Lights ************/
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
 scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0xFDF4DC, 0.6);
+const directionalLight = new THREE.DirectionalLight(0xf5d787, 1.0);
 directionalLight.castShadow = true;
 directionalLight.shadow.mapSize.set(1024, 1024);
 directionalLight.shadow.camera.far = 65;
@@ -283,7 +294,7 @@ function onDocumentKeyUp(event) {
             modelState.autoCamera = !modelState.autoCamera;
             if(!modelState.autoCamera && !orbitControls) {
                 orbitControls = new OrbitControls(camera, canvas);
-                orbitControls.target = new THREE.Vector3(mannequin.position.x, 2, mannequin.position.z);
+                orbitControls.target = new THREE.Vector3(mannequin.position.x, mannequin.position.y + 2, mannequin.position.z);
                 orbitControls.enableDamping = true;
             } else if(modelState.autoCamera && orbitControls) {                
                 orbitControls.dispose();
@@ -414,20 +425,20 @@ const tick = () => {
         updateMannequin();
     }
 
-    // Water
+    // Sea
     // time for animation
-    waterMaterial.uniforms.uTime.value = elapsedTime
+    seaMaterial.uniforms.uTime.value = elapsedTime
 
     // Update camera
     if(modelState.autoCamera) {
         if(mannequin) {
             let angle = - (mannequin.rotation.y + Math.PI * 0.5);
             if (modelState.backward){
-                camera.position.lerp(new THREE.Vector3(mannequin.position.x + Math.cos(angle) * 5, 4,  mannequin.position.z + Math.sin(angle) * 5), 0.1);
+                camera.position.lerp(new THREE.Vector3(mannequin.position.x + Math.cos(angle) * 5, mannequin.position.y + 4,  mannequin.position.z + Math.sin(angle) * 5), 0.1);
             } else {
-                camera.position.lerp(new THREE.Vector3(mannequin.position.x + Math.cos(angle) * 3, 3,  mannequin.position.z + Math.sin(angle) * 3), 0.1);
+                camera.position.lerp(new THREE.Vector3(mannequin.position.x + Math.cos(angle) * 3, mannequin.position.y + 3,  mannequin.position.z + Math.sin(angle) * 3), 0.1);
             }
-            camera.lookAt(mannequin.position.x, 2 ,mannequin.position.z);
+            camera.lookAt(mannequin.position.x, mannequin.position.y + 2 ,mannequin.position.z);
         }
     } else if(orbitControls) {
         // Update orbit controls
