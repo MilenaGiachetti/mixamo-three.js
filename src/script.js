@@ -4,9 +4,10 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import Stats from 'three/examples/jsm/libs/stats.module';
 import * as dat from 'dat.gui';
-import CANNON from 'cannon' 
-import waterVertexShader from './shaders/water/vertex.glsl'
-import waterFragmentShader from './shaders/water/fragment.glsl'
+import CANNON from 'cannon';
+import CannonDebugRenderer from './utils/cannonDebugRenderer.js';
+import waterVertexShader from './shaders/water/vertex.glsl';
+import waterFragmentShader from './shaders/water/fragment.glsl';
 
 /************ Base ************/
 // Debug
@@ -43,11 +44,24 @@ manager.onError = function(url) {
 // Physics
 const world = new CANNON.World();
 world.gravity.set(0, - 9.82, 0);
+const cannonDebugRenderer = new THREE.CannonDebugRenderer( scene, world );
+
+const defaultMaterial = new CANNON.Material('default');
+const defaultContactMaterial = new CANNON.ContactMaterial(
+    defaultMaterial,
+    defaultMaterial,
+    {
+        friction: 0.1,
+        restitution: 0.7
+    }
+);
+world.addContactMaterial(defaultContactMaterial);
 
 /************ Models & animations ************/
 let mixer = null;
 let animationActions = {};
 let mannequin = null;
+let mannequinBody = null;
 
 // Mannequin
 const fbxLoader = new FBXLoader(manager);
@@ -81,6 +95,17 @@ fbxLoader.load("./models/Ch36_nonPBR.fbx", model => {
             }
         )
     }
+    // Add mannequin physic object
+    const mannequinObject = new CANNON.Box(new CANNON.Vec3(0.3, 1, 0.2));
+    mannequinBody = new CANNON.Body({
+        mass: 5,
+        position: new CANNON.Vec3(0, 1, 0),
+        shape: mannequinObject,
+        material: defaultMaterial
+    });
+    mannequinBody.angularDamping = 1;
+    world.addBody(mannequinBody);
+
     scene.add(mannequin);
 });
 
@@ -121,7 +146,7 @@ const sea = new THREE.Mesh(
     // new THREE.PlaneGeometry(50, 50, 512, 512),
     seaMaterial
 );
-sea.position.y = -10;
+sea.position.y = 1.5;
 sea.rotation.x = - Math.PI * 0.5;
 scene.add(sea);
 
@@ -140,13 +165,33 @@ seaFolder.add(seaMaterial.uniforms.uColorOffset, 'value').min(0).max(1).step(0.0
 seaFolder.add(seaMaterial.uniforms.uColorMultiplier, 'value').min(0).max(10).step(0.001).name('uColorMultiplier');
 
 /************ Island ************/
-const geometry = new THREE.SphereGeometry(75, 32, 32);
+const geometry = new THREE.PlaneGeometry(100, 100);
 const material = new THREE.MeshStandardMaterial({color: 0xcaad51});
 const island = new THREE.Mesh(geometry, material);
-island.position.y = -75;
+island.rotation.x = - Math.PI * 0.5;
 island.receiveShadow = true;
 scene.add(island);
 
+const islandShape = new CANNON.Plane() // plano infinito
+const islandBody = new CANNON.Body()
+islandBody.mass = 0;
+islandBody.quaternion.setFromAxisAngle(new CANNON.Vec3(- 1, 0, 0), Math.PI * 0.5);
+islandBody.material = defaultMaterial;
+islandBody.addShape(islandShape);
+world.addBody(islandBody);
+// const geometry = new THREE.SphereGeometry(75, 8, 6);
+// const material = new THREE.MeshStandardMaterial({color: 0xcaad51});
+// const island = new THREE.Mesh(geometry, material);
+// island.position.y = -75;
+// island.receiveShadow = true;
+// scene.add(island);
+
+// const islandShape = new CANNON.Sphere(75);
+// const islandBody = new CANNON.Body();
+// islandBody.position.y = -75;
+// islandBody.mass = 0;
+// islandBody.addShape(islandShape);
+// world.addBody(islandBody);
 
 /************ Lights ************/
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
@@ -341,12 +386,12 @@ function updateMannequin() {
         if(modelState.run) {
             animationActions.walking.weight = animationActions.walking.weight <= 0 ? 0 : animationActions.walking.weight - 0.2;
             animationActions.running.weight = animationActions.running.weight >= 3 ? 3 :  animationActions.running.weight + 0.5;
-            mannequin.position.x +=  Math.cos(angle) * 0.1;
-            mannequin.position.z +=  Math.sin(angle) * 0.1;
+            mannequinBody.position.x +=  Math.cos(angle) * 0.1;
+            mannequinBody.position.z +=  Math.sin(angle) * 0.1;
         } else {
             animationActions.walking.weight = animationActions.walking.weight >= 3 ? 3 : animationActions.walking.weight + 0.2;
-            mannequin.position.x +=  Math.cos(angle) * 0.025;
-            mannequin.position.z +=  Math.sin(angle) * 0.025;
+            mannequinBody.position.x +=  Math.cos(angle) * 0.025;
+            mannequinBody.position.z +=  Math.sin(angle) * 0.025;
         }
     } else {
         goToIdle("walking");
@@ -365,8 +410,8 @@ function updateMannequin() {
     if(modelState.backward) {
         animationActions.idle.stop();
         let angle = - mannequin.rotation.y + Math.PI * 0.5;
-        mannequin.position.x -=  Math.cos(angle) * 0.02;
-        mannequin.position.z -=  Math.sin(angle) * 0.02;
+        mannequinBody.position.x -=  Math.cos(angle) * 0.02;
+        mannequinBody.position.z -=  Math.sin(angle) * 0.02;
     } else {
         goToIdle("walking_backwards");
     }
@@ -432,11 +477,15 @@ const tick = () => {
 
     // Sea
     // time for animation
-    seaMaterial.uniforms.uTime.value = elapsedTime
+    seaMaterial.uniforms.uTime.value = elapsedTime;
 
     // Update camera
-    if(modelState.autoCamera) {
-        if(mannequin) {
+    if(mannequin) {
+        // Update physics
+        world.step(1 / 60, deltaTime, 3);
+        mannequin.position.set(mannequinBody.position.x, mannequinBody.position.y - 1.0, mannequinBody.position.z);
+
+        if(modelState.autoCamera) {
             let angle = - (mannequin.rotation.y + Math.PI * 0.5);
             if (modelState.backward){
                 camera.position.lerp(new THREE.Vector3(mannequin.position.x + Math.cos(angle) * 5, mannequin.position.y + 4,  mannequin.position.z + Math.sin(angle) * 5), 0.1);
@@ -444,13 +493,14 @@ const tick = () => {
                 camera.position.lerp(new THREE.Vector3(mannequin.position.x + Math.cos(angle) * 3, mannequin.position.y + 3,  mannequin.position.z + Math.sin(angle) * 3), 0.1);
             }
             camera.lookAt(mannequin.position.x, mannequin.position.y + 2 ,mannequin.position.z);
+        } else if(orbitControls) {
+            // Update orbit controls
+            orbitControls.update();
         }
-    } else if(orbitControls) {
-        // Update orbit controls
-        orbitControls.update();
     }
 
     stats.update();
+    cannonDebugRenderer.update(); 
 
     // Render
     renderer.render(scene, camera);
