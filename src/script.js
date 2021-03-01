@@ -2,8 +2,9 @@ import './style.css';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
-import * as dat from 'dat.gui';
 import Stats from 'three/examples/jsm/libs/stats.module';
+import * as dat from 'dat.gui';
+import CANNON from 'cannon' 
 import waterVertexShader from './shaders/water/vertex.glsl'
 import waterFragmentShader from './shaders/water/fragment.glsl'
 
@@ -38,6 +39,10 @@ manager.onLoad = function() {
 manager.onError = function(url) {
 	console.log('Error loading ' + url);
 };
+
+// Physics
+const world = new CANNON.World();
+world.gravity.set(0, - 9.82, 0);
 
 /************ Models & animations ************/
 let mixer = null;
