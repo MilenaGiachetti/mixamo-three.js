@@ -4,10 +4,14 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import * as dat from 'dat.gui';
 import Stats from 'three/examples/jsm/libs/stats.module';
+import waterVertexShader from './shaders/water/vertex.glsl'
+import waterFragmentShader from './shaders/water/fragment.glsl'
 
 /************ Base ************/
 // Debug
 const gui = new dat.GUI();
+const debugObject = {}
+
 const guiAnimations = {};
 const animationsFolder = gui.addFolder("Animations");
 
@@ -75,18 +79,58 @@ fbxLoader.load("./models/Ch36_nonPBR.fbx", model => {
 });
 
 /************ Floor ************/
+// Colors
+debugObject.depthColor = '#5e98c0'
+debugObject.surfaceColor = '#daedf7'
+
+const waterMaterial = new THREE.ShaderMaterial({
+    // add shader to material
+    vertexShader: waterVertexShader,
+    fragmentShader: waterFragmentShader,
+    uniforms: {
+        // UNiFORMS PARA VERTEX SHADER
+        // uniform elevación olas
+        uBigWavesElevation: { value: 0.6 },
+        // uniform frecuencia olas en eje x - z
+        uBigWavesFrequency: { value: 1.0 },
+        // uniform con valor del elapsed time para animar
+        uTime: { value: 0 },
+        // uniform para controlar la velocidad de las olas
+        uBigWavesSpeed: { value: 0.75 },
+        uSmallWavesElevation: { value: 0.75 },
+        uSmallWavesFrequency: { value: 0.5 },
+        uSmallWavesSpeed: { value: 0.2 },
+        uSmallIterations: { value: 3 },
+        // UNiFORMS PARA FRAGMENT SHADER
+        // colores 
+        uDepthColor: { value: new THREE.Color(debugObject.depthColor) },
+        uSurfaceColor: { value: new THREE.Color(debugObject.surfaceColor) },
+        uColorOffset: { value: 0.08 },
+        uColorMultiplier: { value: 1 }
+    }
+})
+
 const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(50, 50),
-    new THREE.MeshStandardMaterial({
-        color: '#222222',
-        metalness: 0,
-        roughness: 0.5
-    })
+    new THREE.RingGeometry( 20, 100, 512, 512 ),
+    // new THREE.PlaneGeometry(50, 50, 512, 512),
+    waterMaterial
 );
 floor.receiveShadow = true;
 floor.rotation.x = - Math.PI * 0.5;
 scene.add(floor);
 
+gui.add(waterMaterial.uniforms.uBigWavesElevation, 'value').min(0).max(1).step(0.001).name('uBigWavesElevation')
+gui.add(waterMaterial.uniforms.uBigWavesFrequency, 'value').min(0).max(10).step(0.001).name('uBigWavesFrequency')
+gui.add(waterMaterial.uniforms.uBigWavesSpeed, 'value').min(0).max(10).step(0.001).name('uBigWavesSpeed')
+gui.add(waterMaterial.uniforms.uSmallWavesElevation, 'value').min(0).max(1).step(0.001).name('uSmallWavesElevation')
+gui.add(waterMaterial.uniforms.uSmallWavesFrequency, 'value').min(0).max(30).step(0.001).name('uSmallWavesFrequency')
+gui.add(waterMaterial.uniforms.uSmallWavesSpeed, 'value').min(0).max(4).step(0.001).name('uSmallWavesSpeed')
+gui.add(waterMaterial.uniforms.uSmallIterations, 'value').min(0).max(5).step(1).name('uSmallIterations')
+
+gui.addColor(debugObject, 'depthColor').onChange(() => { waterMaterial.uniforms.uDepthColor.value.set(debugObject.depthColor) })
+gui.addColor(debugObject, 'surfaceColor').onChange(() => { waterMaterial.uniforms.uSurfaceColor.value.set(debugObject.surfaceColor) })
+gui.add(waterMaterial.uniforms.uColorOffset, 'value').min(0).max(1).step(0.001).name('uColorOffset')
+gui.add(waterMaterial.uniforms.uColorMultiplier, 'value').min(0).max(10).step(0.001).name('uColorMultiplier')
 
 /************ Lights ************/
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
@@ -369,6 +413,10 @@ const tick = () => {
         // Model update
         updateMannequin();
     }
+
+    // Water
+    // time for animation
+    waterMaterial.uniforms.uTime.value = elapsedTime
 
     // Update camera
     if(modelState.autoCamera) {
