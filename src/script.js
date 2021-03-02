@@ -12,7 +12,14 @@ import waterFragmentShader from './shaders/water/fragment.glsl';
 /************ Base ************/
 // Debug
 const gui = new dat.GUI();
-const debugObject = {};
+const debugObject = {
+    islandColor: '#caad51',
+    backgroundColor: '#5e98c0'
+};
+
+gui.addColor(debugObject, 'islandColor').onChange(() => {islandMaterial.color.set(debugObject.islandColor)});
+gui.addColor(debugObject, 'backgroundColor').onChange(() => {scene.background = new THREE.Color( debugObject.backgroundColor )});
+
 
 const guiAnimations = {};
 const animationsFolder = gui.addFolder("Animations");
@@ -25,7 +32,7 @@ const canvas = document.querySelector('canvas.webgl');
 
 // Scene
 const scene = new THREE.Scene();
-scene.background = new THREE.Color("#5e98c0");
+scene.background = new THREE.Color(debugObject.backgroundColor);
 
 // Loading Manager
 const manager = new THREE.LoadingManager();
@@ -166,7 +173,7 @@ seaFolder.add(seaMaterial.uniforms.uColorMultiplier, 'value').min(0).max(10).ste
 
 /************ Island ************/
 const islandGeometry = new THREE.PlaneGeometry(100, 100);
-const islandMaterial = new THREE.MeshStandardMaterial({color: 0xcaad51});
+const islandMaterial = new THREE.MeshStandardMaterial({color: debugObject.islandColor});
 const island = new THREE.Mesh(islandGeometry, islandMaterial);
 island.rotation.x = - Math.PI * 0.5;
 island.receiveShadow = true;
