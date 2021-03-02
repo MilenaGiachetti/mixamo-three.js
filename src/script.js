@@ -316,7 +316,7 @@ let currentDance = null;
 function onDocumentKeyDown(event) {
     var keyCode = event.which;
     switch(keyCode) {
-        case 17: // control
+        case 16: // shift - run
             if(!modelState.run) {
                 if(modelState.forward) {
                     animationActions.running.weight = 1;
@@ -326,7 +326,11 @@ function onDocumentKeyDown(event) {
             modelState.dance = false;
             modelState.run = true;
             break;
-        case 32: // spacebar
+        // case 17: // control - crouch / use alternative key for mac
+        //     break;
+        // case 32: // spacebar - jump
+        //     break;
+        case 90: // letter z - dance
             if(!modelState.dance) {
                 let random = Math.floor(Math.random() * danceArray.length);
                 currentDance = danceArray[random];
@@ -334,6 +338,7 @@ function onDocumentKeyDown(event) {
             }
             modelState.dance = true;
             break;
+        case 65: // letter a
         case 37: // left arrow
             if(!modelState.left && !modelState.forward && !modelState.backward) {
                 animationActions.left_turn.weight = 1;
@@ -343,6 +348,7 @@ function onDocumentKeyDown(event) {
             modelState.dance = false;
             modelState.left = true;
             break;
+        case 87: // letter w
         case 38: // up arrow
             if(!modelState.forward) {
                 if(modelState.run) {
@@ -356,6 +362,7 @@ function onDocumentKeyDown(event) {
             modelState.dance = false;
             modelState.forward = true;
             break;
+        case 68: // letter d
         case 39: // right arrow
             if(!modelState.right && !modelState.forward && !modelState.backward) {   
                 animationActions.right_turn.weight = 1;
@@ -365,6 +372,7 @@ function onDocumentKeyDown(event) {
             modelState.dance = false;
             modelState.right = true;
             break;
+        case 83: // letter s
         case 40: // down arrow
             if(modelState.backward === false) {
                 animationActions.walking_backwards.weight = 1;
@@ -378,7 +386,7 @@ function onDocumentKeyDown(event) {
 function onDocumentKeyUp(event) {
     var keyCode = event.which;
     switch(keyCode) {
-        case 16: // shift
+        case 9: // tab - camera toggle
             modelState.autoCamera = !modelState.autoCamera;
             if(!modelState.autoCamera && !orbitControls) {
                 orbitControls = new OrbitControls(camera, canvas);
@@ -389,18 +397,25 @@ function onDocumentKeyUp(event) {
                 orbitControls = null;
             }
             break;
-        case 17: // control
+        case 16: // shift - run
             modelState.run = false;
             break;
+        // case 17: // control - crouch / use alternative key for mac
+        //     modelState.crouch = false;
+        //     break;
+        case 65: // letter a
         case 37: // left arrow
             modelState.left = false;
             break;
+        case 87: // letter w
         case 38: // up arrow
             modelState.forward = false;
             break;
+        case 68: // letter d
         case 39: // right arrow
             modelState.right = false;
             break;
+        case 83: // letter s
         case 40: // down arrow
             modelState.backward = false;
             break;
