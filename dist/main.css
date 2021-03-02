@@ -1,3 +1,4 @@
+/*********************** GENERAL STYLE & NORMALIZE ***********************/
 * {
     margin: 0;
     padding: 0;
@@ -7,6 +8,7 @@ html, body {
     overflow: hidden;
 }
 
+/*********************** CANVAS ***********************/
 .webgl {
     position: fixed;
     top: 0;
@@ -14,6 +16,7 @@ html, body {
     outline: none;
 }
 
+/*********************** LOADING SCREEN SECTION ***********************/
 #loadingScreen {
 	position: absolute;
 	z-index: 2;
@@ -21,7 +24,7 @@ html, body {
 	left: 0;
 	width: 100%;
 	height: 100%;
-	background-color: #5e98c0;
+	background-color: #7EBDC2;
 	opacity: 1;
  	transition: 1s opacity;
 }
@@ -41,10 +44,11 @@ html, body {
     margin: -75px 0 0 -75px;
     border-radius: 50%;
     border: 3px solid transparent;
-    border-top-color: #caad51;
+    border-top-color: #EFD381;
     -webkit-animation: spin 2s linear infinite;
     animation: spin 2s linear infinite;
 }
+
 #loader:before {
     content: "";
     position: absolute;
@@ -54,7 +58,7 @@ html, body {
     bottom: 5px;
     border-radius: 50%;
     border: 3px solid transparent;
-    border-top-color: #caad51;
+    border-top-color: #EFD381;
     -webkit-animation: spin 3s linear infinite;
     animation: spin 3s linear infinite;
 }
@@ -67,10 +71,12 @@ html, body {
     bottom: 15px;
     border-radius: 50%;
     border: 3px solid transparent;
-    border-top-color: #caad51;
+    border-top-color: #EFD381;
     -webkit-animation: spin 1.5s linear infinite;
     animation: spin 1.5s linear infinite;
 }
+
+/* ANIMATION */
 @-webkit-keyframes spin {
     0%   {
         -webkit-transform: rotate(0deg);
@@ -94,6 +100,73 @@ html, body {
         -ms-transform: rotate(360deg);
         transform: rotate(360deg);
     }
+}
+
+/*********************** CONTROL INSTRUCTIONS SECTION ***********************/
+/* OPEN MODAL BTN */
+#controlsOpen {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border: none;
+    width: 30px;
+    cursor: pointer;
+    height: 30px;
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background-color: #FE4120;
+    /* color: #231F20; */
+    color: #EFE6DD;
+    border-radius: 50%;
+}
+
+/* MODAL */
+#controlsPanel {
+    position: absolute;
+	z-index: 3;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.5);
+	opacity: 1;
+ 	transition: 1s opacity;
+    display: flex;
+}
+
+#controlsPanel.fadeOut {
+    opacity: 0;
+    z-index: -1;
+}
+
+#controlsPanel .modal {
+    border-radius: 5px;
+    background-color: #EFE6DD;
+    padding: 20px;
+    text-align: center;
+    margin: auto;
+}
+
+#controlsPanel .modal .instructions {
+    margin-top: 20px;
+    text-align: left;
+}
+
+/* CLOSE MODAL BTN */
+#controlsPanel .modal button {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border: none;
+    cursor: pointer;
+    margin-top: 20px;
+    border-radius: 5px;
+    padding: 10px 20px;
+    background-color: #FE4120;
+    color: #EFE6DD;
+    text-align: center;
+    text-transform: uppercase;
 }
 
 /*# sourceMappingURL=main.css.map*/
