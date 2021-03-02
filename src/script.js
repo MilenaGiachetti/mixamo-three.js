@@ -13,8 +13,8 @@ import waterFragmentShader from './shaders/water/fragment.glsl';
 // Debug
 const gui = new dat.GUI();
 const debugObject = {
-    islandColor: '#caad51',
-    backgroundColor: '#5e98c0'
+    islandColor: '#EFD381',
+    backgroundColor: '#7EBDC2'
 };
 
 gui.addColor(debugObject, 'islandColor').onChange(() => {islandMaterial.color.set(debugObject.islandColor)});
@@ -26,6 +26,15 @@ const animationsFolder = gui.addFolder("Animations");
 
 const stats = Stats();
 document.body.appendChild(stats.dom);
+
+
+// Control instructions
+document.getElementById("controlsOpen").addEventListener("click", ()=>{
+    document.getElementById("controlsPanel").classList.remove("fadeOut");
+})
+document.getElementById("controlsClose").addEventListener("click", ()=>{
+    document.getElementById("controlsPanel").classList.add("fadeOut");
+})
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl');
@@ -105,7 +114,7 @@ fbxLoader.load("./models/Ch36_nonPBR.fbx", model => {
     // Add mannequin physic object
     const mannequinObject = new CANNON.Box(new CANNON.Vec3(0.5, 1, 0.5));
     mannequinBody = new CANNON.Body({
-        mass: 5,
+        mass: 50,
         position: new CANNON.Vec3(0, 1, 0),
         shape: mannequinObject,
         material: defaultMaterial
@@ -118,7 +127,7 @@ fbxLoader.load("./models/Ch36_nonPBR.fbx", model => {
 
 /************ Sea ************/
 // Colors
-debugObject.depthColor = '#5e98c0';
+debugObject.depthColor = '#7EBDC2';
 debugObject.surfaceColor = '#daedf7';
 
 const seaMaterial = new THREE.ShaderMaterial({
@@ -187,7 +196,7 @@ islandBody.material = defaultMaterial;
 islandBody.addShape(islandShape);
 world.addBody(islandBody);
 // const geometry = new THREE.SphereGeometry(75, 8, 6);
-// const material = new THREE.MeshStandardMaterial({color: 0xcaad51});
+// const material = new THREE.MeshStandardMaterial({color: 0xEFD381});
 // const island = new THREE.Mesh(geometry, material);
 // island.position.y = -75;
 // island.receiveShadow = true;
@@ -203,7 +212,7 @@ world.addBody(islandBody);
 /************ Interactive elements ************/
 // Box
 const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
-const boxMaterial = new THREE.MeshStandardMaterial({color: 0x5e98c0});
+const boxMaterial = new THREE.MeshStandardMaterial({color: 0x7EBDC2});
 const box = new THREE.Mesh(boxGeometry, boxMaterial);
 box.receiveShadow = true;
 box.position.set(2, 0.5, 3);
