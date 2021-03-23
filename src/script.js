@@ -259,6 +259,7 @@ const boxMaterial = new THREE.MeshStandardMaterial({color: 0x7EBDC2});
 const box = new THREE.Mesh(boxGeometry, boxMaterial);
 box.receiveShadow = true;
 box.position.set(2, 0.5, 3);
+box.name = "Box";
 scene.add(box);
 
 const boxShape = new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5));
@@ -632,3 +633,30 @@ function updateSun() {
 }
 
 updateSun();
+
+/************ Raycaster ************/
+/* Mouse */
+const mouse = new THREE.Vector2(); // 2 porque es sólo x e y
+
+window.addEventListener('mousemove', (event) => {
+    mouse.x = event.clientX / sizes.width * 2 - 1;
+    mouse.y = - (event.clientY / sizes.height) * 2 + 1;
+})
+
+const raycaster = new THREE.Raycaster();
+
+let currentIntersect = null;
+window.addEventListener('click', () => {
+    raycaster.setFromCamera(mouse, camera);
+    const objectsToTest = [head, mannequin,box];
+    const intersects = raycaster.intersectObjects(objectsToTest, true);
+    if(intersects.length) {
+        currentIntersect = intersects[0]; // ordenados por distancia, va a ser el más cercano
+    } else {
+        currentIntersect = null;
+    }
+    if(currentIntersect) {
+        console.log(currentIntersect);
+        alert(currentIntersect.object.name);
+    }
+})
