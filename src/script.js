@@ -3,22 +3,23 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import Stats from 'three/examples/jsm/libs/stats.module';
+import { Water } from 'three/examples/jsm/objects/Water.js';
 import * as dat from 'dat.gui';
 import CANNON from 'cannon';
 import CannonDebugRenderer from './utils/cannonDebugRenderer.js';
-import waterVertexShader from './shaders/water/vertex.glsl';
-import waterFragmentShader from './shaders/water/fragment.glsl';
+// import waterVertexShader from './shaders/water/vertex.glsl';
+// import waterFragmentShader from './shaders/water/fragment.glsl';
 
 /************ Base ************/
 // Debug
 const gui = new dat.GUI();
 const debugObject = {
-    islandColor: '#EFD381',
-    backgroundColor: '#7EBDC2'
+    islandColor: '#dbe7f2',
+    boundingSphereColor: '#06012d'
 };
 
 gui.addColor(debugObject, 'islandColor').onChange(() => {islandMaterial.color.set(debugObject.islandColor)});
-gui.addColor(debugObject, 'backgroundColor').onChange(() => {scene.background = new THREE.Color( debugObject.backgroundColor )});
+gui.addColor(debugObject, 'boundingSphereColor').onChange(() => {boundingSphereMaterial.color.set(debugObject.boundingSphereColor)});
 
 
 const guiAnimations = {};
@@ -126,65 +127,39 @@ fbxLoader.load("./models/Ch36_nonPBR.fbx", model => {
 });
 
 /************ Sea ************/
-// Colors
-debugObject.depthColor = '#7EBDC2';
-debugObject.surfaceColor = '#daedf7';
+// Water
 
-const seaMaterial = new THREE.ShaderMaterial({
-    // add shader to material
-    vertexShader: waterVertexShader,
-    fragmentShader: waterFragmentShader,
-    uniforms: {
-        // UNiFORMS PARA VERTEX SHADER
-        // uniform elevación olas
-        uBigWavesElevation: { value: 0.6 },
-        // uniform frecuencia olas en eje x - z
-        uBigWavesFrequency: { value: 1.0 },
-        // uniform con valor del elapsed time para animar
-        uTime: { value: 0 },
-        // uniform para controlar la velocidad de las olas
-        uBigWavesSpeed: { value: 0.75 },
-        uSmallWavesElevation: { value: 0.75 },
-        uSmallWavesFrequency: { value: 0.5 },
-        uSmallWavesSpeed: { value: 0.2 },
-        uSmallIterations: { value: 3 },
-        // UNiFORMS PARA FRAGMENT SHADER
-        // colores 
-        uDepthColor: { value: new THREE.Color(debugObject.depthColor) },
-        uSurfaceColor: { value: new THREE.Color(debugObject.surfaceColor) },
-        uColorOffset: { value: 0.08 },
-        uColorMultiplier: { value: 1 }
+const waterGeometry = new THREE.PlaneGeometry( 10000, 10000 );
+
+let water = new Water(
+    waterGeometry,
+    {
+        textureWidth: 512,
+        textureHeight: 512,
+        waterNormals: new THREE.TextureLoader().load( 'textures/waternormals.jpg', function ( texture ) {
+
+            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+
+        } ),
+        alpha: 1.0,
+        sunDirection: new THREE.Vector3(),
+        sunColor: 0xffffff,
+        waterColor: 0x001e0f,
+        distortionScale: 3.7,
+        fog: scene.fog !== undefined
     }
-});
-
-const sea = new THREE.Mesh(
-    new THREE.RingGeometry( 20, 100, 512, 512 ),
-    // new THREE.PlaneGeometry(50, 50, 512, 512),
-    seaMaterial
 );
-sea.position.y = 1.5;
-sea.rotation.x = - Math.PI * 0.5;
-scene.add(sea);
 
-const seaFolder = gui.addFolder("Sea");
-seaFolder.add(seaMaterial.uniforms.uBigWavesElevation, 'value').min(0).max(1).step(0.001).name('uBigWavesElevation');
-seaFolder.add(seaMaterial.uniforms.uBigWavesFrequency, 'value').min(0).max(10).step(0.001).name('uBigWavesFrequency');
-seaFolder.add(seaMaterial.uniforms.uBigWavesSpeed, 'value').min(0).max(10).step(0.001).name('uBigWavesSpeed');
-seaFolder.add(seaMaterial.uniforms.uSmallWavesElevation, 'value').min(0).max(1).step(0.001).name('uSmallWavesElevation');
-seaFolder.add(seaMaterial.uniforms.uSmallWavesFrequency, 'value').min(0).max(30).step(0.001).name('uSmallWavesFrequency');
-seaFolder.add(seaMaterial.uniforms.uSmallWavesSpeed, 'value').min(0).max(4).step(0.001).name('uSmallWavesSpeed');
-seaFolder.add(seaMaterial.uniforms.uSmallIterations, 'value').min(0).max(5).step(1).name('uSmallIterations');
+water.rotation.x = - Math.PI / 2;
 
-seaFolder.addColor(debugObject, 'depthColor').onChange(() => {seaMaterial.uniforms.uDepthColor.value.set(debugObject.depthColor)});
-seaFolder.addColor(debugObject, 'surfaceColor').onChange(() => {seaMaterial.uniforms.uSurfaceColor.value.set(debugObject.surfaceColor)});
-seaFolder.add(seaMaterial.uniforms.uColorOffset, 'value').min(0).max(1).step(0.001).name('uColorOffset');
-seaFolder.add(seaMaterial.uniforms.uColorMultiplier, 'value').min(0).max(10).step(0.001).name('uColorMultiplier');
+scene.add( water );
 
 /************ Island ************/
 const islandGeometry = new THREE.PlaneGeometry(100, 100);
 const islandMaterial = new THREE.MeshStandardMaterial({color: debugObject.islandColor});
 const island = new THREE.Mesh(islandGeometry, islandMaterial);
 island.rotation.x = - Math.PI * 0.5;
+island.position.y = -0.1;
 island.receiveShadow = true;
 scene.add(island);
 
@@ -192,6 +167,7 @@ const islandShape = new CANNON.Plane() // plano infinito
 const islandBody = new CANNON.Body()
 islandBody.mass = 0;
 islandBody.quaternion.setFromAxisAngle(new CANNON.Vec3(- 1, 0, 0), Math.PI * 0.5);
+islandBody.position.y = -0.1;
 islandBody.material = defaultMaterial;
 islandBody.addShape(islandShape);
 world.addBody(islandBody);
@@ -538,15 +514,13 @@ const tick = () => {
     const deltaTime = elapsedTime - previousTime;
     previousTime = elapsedTime;
 
+    water.material.uniforms[ 'time' ].value += 1.0 / (60.0 * 3);
+
     if(mixer) {
         mixer.update(deltaTime);
         // Model update
         updateMannequin();
     }
-
-    // Sea
-    // time for animation
-    seaMaterial.uniforms.uTime.value = elapsedTime;
 
     // Update camera
     if(mannequin) {
