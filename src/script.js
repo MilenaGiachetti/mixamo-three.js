@@ -294,43 +294,32 @@ world.addBody(sphereBody);
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
 scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0xf5d787, 1.0);
-directionalLight.castShadow = true;
-directionalLight.shadow.mapSize.set(1024, 1024);
-directionalLight.shadow.camera.far = 65;
-directionalLight.shadow.camera.left = - 35;
-directionalLight.shadow.camera.top = 20;
-directionalLight.shadow.camera.right = 35;
-directionalLight.shadow.camera.bottom = - 20;
-directionalLight.position.set(20, 15, 20);
-scene.add(directionalLight);
-
-// gui
-function updateCamera() {
-    // update the light target's matrixWorld because it's needed by the helper
-    directionalLight.target.updateMatrixWorld();
-    directionalLightHelper.update();
-    // update the light's shadow camera's projection matrix
-    directionalLight.shadow.camera.updateProjectionMatrix();
-    // and now update the camera helper we're using to show the light's shadow camera
-    shadowCameraHelper.update();
-}
+const pointLight = new THREE.PointLight(0x800000, 0.4, 100);
+pointLight.castShadow = true;
+// pointLight.shadow.mapSize.set(1024, 1024);
+pointLight.shadow.camera.far = 65;
+pointLight.shadow.camera.left = - 35;
+pointLight.shadow.camera.top = 20;
+pointLight.shadow.camera.right = 35;
+pointLight.shadow.camera.bottom = - 20;
+pointLight.position.set(0, 15, 55);
+scene.add(pointLight);
 
 const lightsFolder = gui.addFolder("Lights");
-lightsFolder.add(directionalLight, 'intensity').step(0.1).min(0);
-lightsFolder.add(directionalLight.shadow.camera, 'far').step(1).onChange(updateCamera);
-lightsFolder.add(directionalLight.shadow.camera, 'left').step(1).onChange(updateCamera);
-lightsFolder.add(directionalLight.shadow.camera, 'top').step(1).onChange(updateCamera);
-lightsFolder.add(directionalLight.shadow.camera, 'right').step(1).onChange(updateCamera);
-lightsFolder.add(directionalLight.shadow.camera, 'bottom').step(1).onChange(updateCamera);
-lightsFolder.add(directionalLight.shadow.camera.position, 'x').step(1).onChange(updateCamera);
-lightsFolder.add(directionalLight.shadow.camera.position, 'y').step(1).onChange(updateCamera);
-lightsFolder.add(directionalLight.shadow.camera.position, 'z').step(1).onChange(updateCamera);
+lightsFolder.add(pointLight, 'intensity').step(0.1).min(0);
 
-// const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 2);
-// scene.add(directionalLightHelper);
-// let shadowCameraHelper = new THREE.CameraHelper( directionalLight.shadow.camera );
-// scene.add( shadowCameraHelper );
+const pointLight2 = new THREE.PointLight(0x000080, 0.3, 100);
+pointLight2.castShadow = true;
+// pointLight2.shadow.mapSize.set(1024, 1024);
+pointLight2.shadow.camera.far = 65;
+pointLight2.shadow.camera.left = - 35;
+pointLight2.shadow.camera.top = 20;
+pointLight2.shadow.camera.right = 35;
+pointLight2.shadow.camera.bottom = - 20;
+pointLight2.position.set(5, 15, 55);
+scene.add(pointLight2);
+
+lightsFolder.add(pointLight2, 'intensity').step(0.1).min(0);
 
 /************ Sizes ************/
 const sizes = {
