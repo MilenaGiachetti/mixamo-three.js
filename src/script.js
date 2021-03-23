@@ -8,7 +8,7 @@ import { Water } from 'three/examples/jsm/objects/Water.js';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import * as dat from 'dat.gui';
 import CANNON from 'cannon';
-import CannonDebugRenderer from './utils/cannonDebugRenderer.js';
+// import CannonDebugRenderer from './utils/cannonDebugRenderer.js';
 // import waterVertexShader from './shaders/water/vertex.glsl';
 // import waterFragmentShader from './shaders/water/fragment.glsl';
 
@@ -62,7 +62,7 @@ manager.onError = function(url) {
 // Physics
 const world = new CANNON.World();
 world.gravity.set(0, - 9.82, 0);
-const cannonDebugRenderer = new THREE.CannonDebugRenderer( scene, world );
+// const cannonDebugRenderer = new THREE.CannonDebugRenderer( scene, world );
 
 const defaultMaterial = new CANNON.Material('default');
 const defaultContactMaterial = new CANNON.ContactMaterial(
@@ -604,7 +604,7 @@ const tick = () => {
     }
 
     stats.update();
-    cannonDebugRenderer.update(); 
+    // cannonDebugRenderer.update(); 
 
     // Render
     renderer.render(scene, camera);
