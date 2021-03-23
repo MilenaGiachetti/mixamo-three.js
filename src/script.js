@@ -2,6 +2,7 @@ import './style.css';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import Stats from 'three/examples/jsm/libs/stats.module';
 import { Water } from 'three/examples/jsm/objects/Water.js';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
@@ -125,6 +126,39 @@ fbxLoader.load("./models/Ch36_nonPBR.fbx", model => {
 
     scene.add(mannequin);
 });
+
+/************ Head ************/
+let head;
+const objLoader = new OBJLoader(manager);
+const folderHead = gui.addFolder( 'Head' );
+objLoader.load("./models/female_head.OBJ", model => {
+    console.log(model);
+    head = model;
+    model.scale.set(3, 3, 3);
+    model.position.set( -12, 3.1, 40);
+    model.rotation.reorder('YXZ')
+    model.rotation.y = Math.PI * 0.05;
+    model.rotation.x = Math.PI * 1.75;
+    // model.rotateX(9);
+    scene.add(model);
+    folderHead.add( head.rotation, 'x', 0,  Math.PI * 2, 0.0001 );
+    folderHead.add( head.rotation, 'y', 0,  Math.PI * 2, 0.0001 );
+    folderHead.add( head.rotation, 'z', 0,  Math.PI * 2, 0.0001 );
+    folderHead.add( head.position, 'x', -60,  60, 0.1 );
+    folderHead.add( head.position, 'y', -60,  60, 0.1 );
+    folderHead.add( head.position, 'z', -60,  60, 0.1 );
+    folderHead.open();
+});
+
+// const textureLoader = new THREE.TextureLoader(manager)
+
+// const colorTexture = textureLoader.load('/textures/moon/moon_color.jpg')
+
+const moonGeometry = new THREE.SphereGeometry( 3, 32, 32 );
+const moonMaterial = new THREE.MeshBasicMaterial( {color: 0xf2f2f2} );
+const moon = new THREE.Mesh( moonGeometry, moonMaterial );
+moon.position.set( 0, 15, 55);
+scene.add( moon );
 
 /************ Sky ************/
 let sun = new THREE.Vector3();
