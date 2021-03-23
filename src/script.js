@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import Stats from 'three/examples/jsm/libs/stats.module';
 import { Water } from 'three/examples/jsm/objects/Water.js';
+import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import * as dat from 'dat.gui';
 import CANNON from 'cannon';
 import CannonDebugRenderer from './utils/cannonDebugRenderer.js';
@@ -42,7 +43,6 @@ const canvas = document.querySelector('canvas.webgl');
 
 // Scene
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(debugObject.backgroundColor);
 
 // Loading Manager
 const manager = new THREE.LoadingManager();
@@ -126,9 +126,34 @@ fbxLoader.load("./models/Ch36_nonPBR.fbx", model => {
     scene.add(mannequin);
 });
 
+/************ Sky ************/
+let sun = new THREE.Vector3();
+
+// Skybox
+
+const sky = new Sky();
+sky.scale.setScalar( 10000 );
+scene.add( sky );
+
+const skyUniforms = sky.material.uniforms;
+
+skyUniforms[ 'turbidity' ].value = 10;
+skyUniforms[ 'rayleigh' ].value = 2;
+skyUniforms[ 'mieCoefficient' ].value = 0.005;
+skyUniforms[ 'mieDirectionalG' ].value = 0.8;
+
+const parameters = {
+    inclination: 0.490,
+    azimuth: 0.75
+};
+
+const folderSky = gui.addFolder( 'Sky' );
+folderSky.add( parameters, 'inclination', 0, 0.5, 0.0001 ).onChange( updateSun );
+folderSky.add( parameters, 'azimuth', 0, 1, 0.0001 ).onChange( updateSun );
+folderSky.open();
+
 /************ Sea ************/
 // Water
-
 const waterGeometry = new THREE.PlaneGeometry( 10000, 10000 );
 
 let water = new Water(
@@ -153,6 +178,14 @@ let water = new Water(
 water.rotation.x = - Math.PI / 2;
 
 scene.add( water );
+
+const waterUniforms = water.material.uniforms;
+
+const folderWater = gui.addFolder( 'Water' );
+folderWater.add( waterUniforms.distortionScale, 'value', 0, 8, 0.1 ).name( 'distortionScale' );
+folderWater.add( waterUniforms.size, 'value', 0.1, 10, 0.1 ).name( 'size' );
+folderWater.add( waterUniforms.alpha, 'value', 0.9, 1, .001 ).name( 'alpha' );
+folderWater.open();
 
 /************ Island ************/
 const islandGeometry = new THREE.PlaneGeometry(100, 100);
@@ -555,3 +588,24 @@ const tick = () => {
     // Call tick again on the next frame
     window.requestAnimationFrame(tick);
 }
+
+/************ update sun ************/
+const pmremGenerator = new THREE.PMREMGenerator( renderer );
+
+function updateSun() {
+
+    const theta = Math.PI * ( parameters.inclination - 0.5 );
+    const phi = 2 * Math.PI * ( parameters.azimuth - 0.5 );
+
+    sun.x = Math.cos( phi );
+    sun.y = Math.sin( phi ) * Math.sin( theta );
+    sun.z = Math.sin( phi ) * Math.cos( theta );
+
+    sky.material.uniforms[ 'sunPosition' ].value.copy( sun );
+    water.material.uniforms[ 'sunDirection' ].value.copy( sun ).normalize();
+
+    scene.environment = pmremGenerator.fromScene( sky ).texture;
+
+}
+
+updateSun();
