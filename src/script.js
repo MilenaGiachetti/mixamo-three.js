@@ -188,7 +188,7 @@ folderSky.open();
 
 /************ Sea ************/
 // Water
-const waterGeometry = new THREE.PlaneGeometry( 10000, 10000 );
+const waterGeometry = new THREE.PlaneGeometry( 150, 150 );
 
 let water = new Water(
     waterGeometry,
@@ -204,7 +204,7 @@ let water = new Water(
         sunDirection: new THREE.Vector3(),
         sunColor: 0xffffff,
         waterColor: 0x001e0f,
-        distortionScale: 3.7,
+        distortionScale: 1.4,
         fog: scene.fog !== undefined
     }
 );
