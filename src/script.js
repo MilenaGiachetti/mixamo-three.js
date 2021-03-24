@@ -17,7 +17,8 @@ import CANNON from 'cannon';
 const gui = new dat.GUI();
 const debugObject = {
     islandColor: '#dbe7f2',
-    boundingSphereColor: '#06012d'
+    boundingSphereColor: '#06012d',
+    moonLightColor: '#c39700'
 };
 
 gui.addColor(debugObject, 'islandColor').onChange(() => {islandMaterial.color.set(debugObject.islandColor)});
@@ -147,18 +148,22 @@ objLoader.load("./models/female_head.OBJ", model => {
     folderHead.add( head.position, 'x', -60,  60, 0.1 );
     folderHead.add( head.position, 'y', -60,  60, 0.1 );
     folderHead.add( head.position, 'z', -60,  60, 0.1 );
-    folderHead.open();
 });
 
-// const textureLoader = new THREE.TextureLoader(manager)
-
-// const colorTexture = textureLoader.load('/textures/moon/moon_color.jpg')
+const textureLoader = new THREE.TextureLoader(manager)
+const colorTexture = textureLoader.load('/textures/moon/moon_color.jpg')
+const normalTexture = textureLoader.load('/textures/moon/moon_norm.jpg')
 
 const moonGeometry = new THREE.SphereGeometry( 3, 32, 32 );
-const moonMaterial = new THREE.MeshBasicMaterial( {color: 0xf2f2f2} );
+const moonMaterial = new THREE.MeshStandardMaterial( {map: colorTexture, normalMap: normalTexture, emissive: debugObject.moonLightColor, emissiveIntensity: 0.2 } );
 const moon = new THREE.Mesh( moonGeometry, moonMaterial );
 moon.position.set( 0, 15, 55);
 scene.add( moon );
+
+const folderMoon = gui.addFolder( 'Moon' );
+folderMoon.add( moonMaterial, 'emissiveIntensity', 0, 5, 0.1 );
+folderMoon.addColor(debugObject, 'moonLightColor').onChange(() => {moonMaterial.emissive.set(debugObject.moonLightColor)});
+
 
 /************ Sky ************/
 let sun = new THREE.Vector3();
@@ -184,11 +189,10 @@ const parameters = {
 const folderSky = gui.addFolder( 'Sky' );
 folderSky.add( parameters, 'inclination', 0, 0.5, 0.0001 ).onChange( updateSun );
 folderSky.add( parameters, 'azimuth', 0, 1, 0.0001 ).onChange( updateSun );
-folderSky.open();
 
 /************ Sea ************/
 // Water
-const waterGeometry = new THREE.PlaneGeometry( 150, 150 );
+const waterGeometry = new THREE.PlaneGeometry( 250, 250 );
 
 let water = new Water(
     waterGeometry,
@@ -219,7 +223,6 @@ const folderWater = gui.addFolder( 'Water' );
 folderWater.add( waterUniforms.distortionScale, 'value', 0, 8, 0.1 ).name( 'distortionScale' );
 folderWater.add( waterUniforms.size, 'value', 0.1, 10, 0.1 ).name( 'size' );
 folderWater.add( waterUniforms.alpha, 'value', 0.9, 1, .001 ).name( 'alpha' );
-folderWater.open();
 
 /************ Island ************/
 const islandGeometry = new THREE.PlaneGeometry(100, 100);
@@ -291,25 +294,25 @@ world.addBody(sphereBody);
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
 scene.add(ambientLight);
 
-const pointLight = new THREE.PointLight(0x800000, 0.4, 100);
-// pointLight.castShadow = true;
-// pointLight.shadow.mapSize.set(1024, 1024);
-// pointLight.shadow.camera.far = 65;
-// pointLight.shadow.camera.left = - 35;
-// pointLight.shadow.camera.top = 20;
-// pointLight.shadow.camera.right = 35;
-// pointLight.shadow.camera.bottom = - 20;
-pointLight.position.set(0, 15, 55);
-scene.add(pointLight);
+const directionalLight = new THREE.DirectionalLight(0x800000, 1);
+// directionalLight.castShadow = true;
+// directionalLight.shadow.mapSize.set(1024, 1024);
+// directionalLight.shadow.camera.far = 65;
+// directionalLight.shadow.camera.left = - 35;
+// directionalLight.shadow.camera.top = 20;
+// directionalLight.shadow.camera.right = 35;
+// directionalLight.shadow.camera.bottom = - 20;
+directionalLight.position.set(0, 15, 55);
+scene.add(directionalLight);
 
 const lightsFolder = gui.addFolder("Lights");
+lightsFolder.add(directionalLight, 'intensity').step(0.1).min(0);
+
+const pointLight = new THREE.PointLight(0x000080, 0.6, 100);
+pointLight.position.set(5, 15, 55);
+scene.add(pointLight);
+
 lightsFolder.add(pointLight, 'intensity').step(0.1).min(0);
-
-const pointLight2 = new THREE.PointLight(0x000080, 0.3, 100);
-pointLight2.position.set(5, 15, 55);
-scene.add(pointLight2);
-
-lightsFolder.add(pointLight2, 'intensity').step(0.1).min(0);
 
 /************ Sizes ************/
 const sizes = {
