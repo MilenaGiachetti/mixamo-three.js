@@ -85,13 +85,13 @@ let mannequinBody = null;
 const fbxLoader = new FBXLoader(manager);
 fbxLoader.load("./models/Ch36_nonPBR.fbx", model => {
     mannequin = model;
-    mannequin.traverse( 
-        function(node) { 
-            if(node instanceof THREE.Mesh) { 
-                node.castShadow = true; 
-            } 
-        } 
-    );
+    // mannequin.traverse( 
+    //     function(node) { 
+    //         if(node instanceof THREE.Mesh) { 
+    //             node.castShadow = true; 
+    //         } 
+    //     } 
+    // );
     mannequin.scale.set(0.01, 0.01, 0.01);
     mixer = new THREE.AnimationMixer(mannequin);
     // Mannequin animations
@@ -227,7 +227,6 @@ const islandMaterial = new THREE.MeshStandardMaterial({color: debugObject.island
 const island = new THREE.Mesh(islandGeometry, islandMaterial);
 island.rotation.x = - Math.PI * 0.5;
 island.position.y = -0.1;
-island.receiveShadow = true;
 scene.add(island);
 
 const islandShape = new CANNON.Plane() // plano infinito
@@ -242,7 +241,6 @@ world.addBody(islandBody);
 // const material = new THREE.MeshStandardMaterial({color: 0xEFD381});
 // const island = new THREE.Mesh(geometry, material);
 // island.position.y = -75;
-// island.receiveShadow = true;
 // scene.add(island);
 
 // const islandShape = new CANNON.Sphere(75);
@@ -257,7 +255,6 @@ world.addBody(islandBody);
 const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
 const boxMaterial = new THREE.MeshStandardMaterial({color: 0x7EBDC2});
 const box = new THREE.Mesh(boxGeometry, boxMaterial);
-box.receiveShadow = true;
 box.position.set(2, 0.5, 3);
 box.name = "Box";
 scene.add(box);
@@ -276,7 +273,6 @@ world.addBody(boxBody);
 const sphereGeometry = new THREE.SphereGeometry(0.2, 8, 6);
 const sphereMaterial = new THREE.MeshStandardMaterial({color: 0x36b330});
 const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-sphere.receiveShadow = true;
 sphere.position.set(-2, 0.5, -3);
 scene.add(sphere);
 
@@ -296,13 +292,13 @@ const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
 scene.add(ambientLight);
 
 const pointLight = new THREE.PointLight(0x800000, 0.4, 100);
-pointLight.castShadow = true;
+// pointLight.castShadow = true;
 // pointLight.shadow.mapSize.set(1024, 1024);
-pointLight.shadow.camera.far = 65;
-pointLight.shadow.camera.left = - 35;
-pointLight.shadow.camera.top = 20;
-pointLight.shadow.camera.right = 35;
-pointLight.shadow.camera.bottom = - 20;
+// pointLight.shadow.camera.far = 65;
+// pointLight.shadow.camera.left = - 35;
+// pointLight.shadow.camera.top = 20;
+// pointLight.shadow.camera.right = 35;
+// pointLight.shadow.camera.bottom = - 20;
 pointLight.position.set(0, 15, 55);
 scene.add(pointLight);
 
@@ -310,13 +306,6 @@ const lightsFolder = gui.addFolder("Lights");
 lightsFolder.add(pointLight, 'intensity').step(0.1).min(0);
 
 const pointLight2 = new THREE.PointLight(0x000080, 0.3, 100);
-pointLight2.castShadow = true;
-// pointLight2.shadow.mapSize.set(1024, 1024);
-pointLight2.shadow.camera.far = 65;
-pointLight2.shadow.camera.left = - 35;
-pointLight2.shadow.camera.top = 20;
-pointLight2.shadow.camera.right = 35;
-pointLight2.shadow.camera.bottom = - 20;
 pointLight2.position.set(5, 15, 55);
 scene.add(pointLight2);
 
@@ -557,8 +546,8 @@ function updateMannequin() {
 const renderer = new THREE.WebGLRenderer({
     canvas: canvas
 });
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+// renderer.shadowMap.enabled = true;
+// renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
