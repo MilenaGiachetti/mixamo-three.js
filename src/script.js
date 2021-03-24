@@ -133,8 +133,8 @@ let head;
 const objLoader = new OBJLoader(manager);
 const folderHead = gui.addFolder( 'Head' );
 objLoader.load("./models/female_head.OBJ", model => {
-    console.log(model);
     head = model;
+    model.children[0].material.color = new THREE.Color("#fff2ff");
     model.scale.set(3, 3, 3);
     model.position.set( -12, 3.1, 40);
     model.rotation.reorder('YXZ')
@@ -182,7 +182,7 @@ skyUniforms[ 'mieCoefficient' ].value = 0.005;
 skyUniforms[ 'mieDirectionalG' ].value = 0.8;
 
 const parameters = {
-    inclination: 0.490,
+    inclination: 0.488,
     azimuth: 0.75
 };
 
@@ -255,12 +255,24 @@ world.addBody(islandBody);
 
 /************ Interactive elements ************/
 // Box
+const boxColorTexture = textureLoader.load('/textures/crate/color.jpg')
+const boxOclussionTexture = textureLoader.load('/textures/crate/occlusion.jpg')
+const boxNormalTexture = textureLoader.load('/textures/crate/normal.jpg')
+const boxRoughnessTexture = textureLoader.load('/textures/crate/roughness.jpg')
+
 const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
-const boxMaterial = new THREE.MeshStandardMaterial({color: 0x7EBDC2});
+const boxMaterial = new THREE.MeshStandardMaterial({map: boxColorTexture, normalMap: boxNormalTexture, roughnessMap: boxRoughnessTexture, aoMap: boxOclussionTexture});
 const box = new THREE.Mesh(boxGeometry, boxMaterial);
 box.position.set(2, 0.5, 3);
 box.name = "Box";
 scene.add(box);
+
+for (let i = 0; i < 60; i++){
+    let boxes = new THREE.Mesh(boxGeometry, boxMaterial);
+    boxes.position.set(Math.random() * 200 - 100, 0.5, Math.random() * 200 - 100);
+    boxes.name = "boxes" + i;
+    scene.add(boxes);
+}
 
 const boxShape = new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5));
 const boxBody = new CANNON.Body({
