@@ -447,6 +447,9 @@ function onDocumentKeyUp(event) {
             if(!modelState.autoCamera && !orbitControls) {
                 orbitControls = new OrbitControls(camera, canvas);
                 orbitControls.target = new THREE.Vector3(mannequin.position.x, mannequin.position.y + 2, mannequin.position.z);
+                orbitControls.maxPolarAngle = Math.PI * 0.5;
+                orbitControls.maxDistance = 30;
+                orbitControls.minDistance = 3;
                 orbitControls.enableDamping = true;
             } else if(modelState.autoCamera && orbitControls) {                
                 orbitControls.dispose();
