@@ -9,7 +9,7 @@ import { Water } from 'three/examples/jsm/objects/Water.js';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import * as dat from 'dat.gui';
 import CANNON from 'cannon';
-import CannonDebugRenderer from './utils/cannonDebugRenderer.js';
+// import CannonDebugRenderer from './utils/cannonDebugRenderer.js';
 // import waterVertexShader from './shaders/water/vertex.glsl';
 // import waterFragmentShader from './shaders/water/fragment.glsl';
 
@@ -66,7 +66,7 @@ const world = new CANNON.World();
 // world.allowSleep = true;
 world.broadphase = new CANNON.SAPBroadphase(world);
 world.gravity.set(0, - 9.82, 0);
-const cannonDebugRenderer = new THREE.CannonDebugRenderer( scene, world );
+// const cannonDebugRenderer = new THREE.CannonDebugRenderer( scene, world );
 
 const defaultMaterial = new CANNON.Material('default');
 const defaultContactMaterial = new CANNON.ContactMaterial(
@@ -304,27 +304,37 @@ const createCrate = (width, height, depth, position, name) => {
     objectsToUpdate.push({ mesh, body });
 }
 
-for (let i = 0; i < 20; i++){
-    createCrate(1, 1, 1, { x: Math.random() * 100 - 50, y:  0.5, z: Math.random() * 100 - 50}, `Box ${i}` )
+// Sphere - ball
+const sphereGeometry = new THREE.SphereGeometry(1, 16, 16);
+
+const createSphere = (radius, position, name) => {
+    // Three.js mesh
+    const mesh = new THREE.Mesh(sphereGeometry, moonMaterial)
+    mesh.scale.set(radius, radius, radius)
+    mesh.position.copy(position)
+    mesh.name = name;
+    scene.add(mesh)
+
+    // Cannon.js body
+    const shape = new CANNON.Sphere(radius)
+
+    const body = new CANNON.Body({
+        mass: 1,
+        position: new CANNON.Vec3(0, 3, 0),
+        shape: shape,
+        material: defaultMaterial
+    })
+    body.position.copy(position)
+    world.addBody(body)
+
+    // Save in objects
+    objectsToUpdate.push({ mesh, body });
 }
 
-// Sphere - ball
-const sphereGeometry = new THREE.SphereGeometry(0.2, 8, 6);
-const sphereMaterial = new THREE.MeshStandardMaterial({color: 0x36b330});
-const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-sphere.position.set(-2, 0.5, -3);
-scene.add(sphere);
-
-const sphereShape = new CANNON.Sphere(0.2);
-const sphereBody = new CANNON.Body({
-    mass: 0.1,
-    position: new CANNON.Vec3(-2, 1, -3),
-    shape: sphereShape,
-    material: defaultMaterial
-});
-sphereBody.addShape(sphereShape);
-world.addBody(sphereBody);
-
+for (let i = 0; i < 20; i++){
+    createCrate(1, 1, 1, { x: Math.random() * 100 - 50, y:  0.5, z: Math.random() * 100 - 50}, `Crate ${i}` );
+    createSphere(Math.random() + 0.2, { x: Math.random() * 100 - 50, y:  0.5, z: Math.random() * 100 - 50}, `Ball ${i}` )
+}
 
 /************ Lights ************/
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
@@ -617,8 +627,6 @@ const tick = () => {
         world.step(1 / 60, deltaTime, 3);
         mannequin.position.set(mannequinBody.position.x, mannequinBody.position.y - 1.0, mannequinBody.position.z);
 
-        sphere.position.copy(sphereBody.position);
-
         if(modelState.autoCamera) {
             let angle = - (mannequin.rotation.y + Math.PI * 0.5);
             if (modelState.backward){
@@ -639,7 +647,7 @@ const tick = () => {
     }
 
     stats.update();
-    cannonDebugRenderer.update(); 
+    // cannonDebugRenderer.update(); 
 
     // Render
     renderer.render(scene, camera);
