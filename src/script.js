@@ -18,13 +18,8 @@ import CANNON from 'cannon';
 const gui = new dat.GUI();
 const debugObject = {
     islandColor: '#000f20',
-    boundingSphereColor: '#06012d',
     moonLightColor: '#c3002d'
 };
-
-gui.addColor(debugObject, 'islandColor').onChange(() => {islandMaterial.color.set(debugObject.islandColor)});
-gui.addColor(debugObject, 'boundingSphereColor').onChange(() => {boundingSphereMaterial.color.set(debugObject.boundingSphereColor)});
-
 
 const guiAnimations = {};
 const animationsFolder = gui.addFolder("Animations");
@@ -245,13 +240,14 @@ scene.add(island);
 const terrainFolder = gui.addFolder("Terrain");
 terrainFolder.add(island.position, 'y').step(0.1).min(-50).max(50);
 terrainFolder.add(island.material, 'displacementScale').step(0.1).min(-100).max(200);
+terrainFolder.addColor(debugObject, 'islandColor').onChange(() => {islandMaterial.color.set(debugObject.islandColor)});
 
 const islandShape = new CANNON.Plane() // plano infinito
 const islandBody = new CANNON.Body()
 islandBody.mass = 0;
 islandBody.quaternion.setFromAxisAngle(new CANNON.Vec3(- 1, 0, 0), Math.PI * 0.5);
 // keep base terrain physic position in the same place por character and elements support
-islandBody.position.y = -0.1;
+islandBody.position.y = -0.25;
 islandBody.material = defaultMaterial;
 islandBody.addShape(islandShape);
 world.addBody(islandBody);
@@ -279,10 +275,11 @@ const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
 const boxMaterial = new THREE.MeshStandardMaterial({map: boxColorTexture, normalMap: boxNormalTexture, roughnessMap: boxRoughnessTexture, aoMap: boxOclussionTexture});
 let objectsToUpdate = [];
 
-const createCrate = (width, height, depth, position, name) => {
+const createCrate = (width, height, depth, position, rotation, name) => {
     // Three.js mesh
     const mesh = new THREE.Mesh(boxGeometry, boxMaterial);
     mesh.scale.set(width, height, depth);
+    mesh.rotation.y = rotation * Math.PI;
     mesh.castShadow = true;
     mesh.name = name;
     mesh.position.copy(position);
@@ -298,6 +295,7 @@ const createCrate = (width, height, depth, position, name) => {
         material: defaultMaterial
     });
     body.position.copy(position);
+    body.quaternion.copy(mesh.quaternion);
     world.addBody(body);
 
     // Save in objects
@@ -332,7 +330,8 @@ const createSphere = (radius, position, name) => {
 }
 
 for (let i = 0; i < 20; i++){
-    createCrate(1, 1, 1, { x: Math.random() * 100 - 50, y:  0.5, z: Math.random() * 100 - 50}, `Crate ${i}` );
+    let crateSizeVariation = Math.random() * (1.3 - 1) + 1;
+    createCrate(crateSizeVariation, crateSizeVariation, crateSizeVariation, { x: Math.random() * 100 - 50, y:  0.4, z: Math.random() * 100 - 50}, Math.random(), `Crate ${i}` );
     createSphere(Math.random() + 0.2, { x: Math.random() * 100 - 50, y:  0.5, z: Math.random() * 100 - 50}, `Ball ${i}` )
 }
 
