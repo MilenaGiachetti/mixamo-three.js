@@ -2,6 +2,7 @@ import './style.css';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import Stats from 'three/examples/jsm/libs/stats.module';
 import { Water } from 'three/examples/jsm/objects/Water.js';
@@ -83,9 +84,12 @@ let mannequin = null;
 let mannequinBody = null;
 
 // Mannequin
+const gltfLoader = new GLTFLoader(manager);
 const fbxLoader = new FBXLoader(manager);
-fbxLoader.load("./models/Ch36_nonPBR.fbx", model => {
-    mannequin = model;
+
+gltfLoader.load("./models/mannequin/mannequin.glb", model => {
+    // console.log(model);
+    mannequin = model.scene;
     // mannequin.traverse( 
     //     function(node) { 
     //         if(node instanceof THREE.Mesh) { 
@@ -93,12 +97,11 @@ fbxLoader.load("./models/Ch36_nonPBR.fbx", model => {
     //         } 
     //     } 
     // );
-    mannequin.scale.set(0.01, 0.01, 0.01);
     mixer = new THREE.AnimationMixer(mannequin);
     // Mannequin animations
     let animationsToLoad = ["walking", "idle", "walking_backwards", "running", "left_turn", "right_turn", "macarena", "wave", "swing"];
     for(const animationToLoad of animationsToLoad){
-        fbxLoader.load(`./models/animations/${animationToLoad}.fbx`,
+        fbxLoader.load(`./models/mannequin/animations/${animationToLoad}.fbx`,
             (object) => {
                 let animationAction = mixer.clipAction((object).animations[0]);
                 animationActions[animationToLoad] = animationAction;
@@ -132,7 +135,7 @@ fbxLoader.load("./models/Ch36_nonPBR.fbx", model => {
 let head;
 const objLoader = new OBJLoader(manager);
 const folderHead = gui.addFolder( 'Head' );
-objLoader.load("./models/female_head.OBJ", model => {
+objLoader.load("./models/head/head.OBJ", model => {
     head = model;
     model.children[0].material.color = new THREE.Color("#fff2ff");
     model.scale.set(3, 3, 3);
@@ -554,6 +557,7 @@ function updateMannequin() {
     // dance
     if(!modelState.dance && animationActions[currentDance]) {
         animationActions[currentDance].stop();
+        currentDance = null;
     }
 }
 
