@@ -154,8 +154,8 @@ objLoader.load("./models/head/head.OBJ", model => {
 });
 
 const textureLoader = new THREE.TextureLoader(manager)
-const colorTexture = textureLoader.load('/textures/moon/moon_color.jpg')
-const normalTexture = textureLoader.load('/textures/moon/moon_norm.jpg')
+const colorTexture = textureLoader.load('./textures/moon/moon_color.jpg')
+const normalTexture = textureLoader.load('./textures/moon/moon_norm.jpg')
 
 const moonGeometry = new THREE.SphereGeometry( 3, 32, 32 );
 const moonMaterial = new THREE.MeshStandardMaterial( {map: colorTexture, normalMap: normalTexture, emissive: debugObject.moonLightColor, emissiveIntensity: 0.2 } );
@@ -202,7 +202,7 @@ let water = new Water(
     {
         textureWidth: 512,
         textureHeight: 512,
-        waterNormals: new THREE.TextureLoader().load( 'textures/waternormals.jpg', function ( texture ) {
+        waterNormals: new THREE.TextureLoader().load( './textures/waternormals.jpg', function ( texture ) {
 
             texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
 
@@ -258,10 +258,10 @@ world.addBody(islandBody);
 
 /************ Interactive elements ************/
 // Box
-const boxColorTexture = textureLoader.load('/textures/crate/color.jpg')
-const boxOclussionTexture = textureLoader.load('/textures/crate/occlusion.jpg')
-const boxNormalTexture = textureLoader.load('/textures/crate/normal.jpg')
-const boxRoughnessTexture = textureLoader.load('/textures/crate/roughness.jpg')
+const boxColorTexture = textureLoader.load('./textures/crate/color.jpg')
+const boxOclussionTexture = textureLoader.load('./textures/crate/occlusion.jpg')
+const boxNormalTexture = textureLoader.load('./textures/crate/normal.jpg')
+const boxRoughnessTexture = textureLoader.load('./textures/crate/roughness.jpg')
 
 const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
 const boxMaterial = new THREE.MeshStandardMaterial({map: boxColorTexture, normalMap: boxNormalTexture, roughnessMap: boxRoughnessTexture, aoMap: boxOclussionTexture});
