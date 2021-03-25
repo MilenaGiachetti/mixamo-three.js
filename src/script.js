@@ -9,7 +9,7 @@ import { Water } from 'three/examples/jsm/objects/Water.js';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import * as dat from 'dat.gui';
 import CANNON from 'cannon';
-// import CannonDebugRenderer from './utils/cannonDebugRenderer.js';
+import CannonDebugRenderer from './utils/cannonDebugRenderer.js';
 // import waterVertexShader from './shaders/water/vertex.glsl';
 // import waterFragmentShader from './shaders/water/fragment.glsl';
 
@@ -63,8 +63,10 @@ manager.onError = function(url) {
 
 // Physics
 const world = new CANNON.World();
+// world.allowSleep = true;
+world.broadphase = new CANNON.SAPBroadphase(world);
 world.gravity.set(0, - 9.82, 0);
-// const cannonDebugRenderer = new THREE.CannonDebugRenderer( scene, world );
+const cannonDebugRenderer = new THREE.CannonDebugRenderer( scene, world );
 
 const defaultMaterial = new CANNON.Material('default');
 const defaultContactMaterial = new CANNON.ContactMaterial(
@@ -118,7 +120,7 @@ gltfLoader.load("./models/mannequin/mannequin.glb", model => {
         )
     }
     // Add mannequin physic object
-    const mannequinObject = new CANNON.Box(new CANNON.Vec3(0.5, 1, 0.5));
+    const mannequinObject = new CANNON.Box(new CANNON.Vec3(0.75, 1, 0.75));
     mannequinBody = new CANNON.Body({
         mass: 50,
         position: new CANNON.Vec3(0, 1, 0),
@@ -275,27 +277,36 @@ const boxRoughnessTexture = textureLoader.load('./textures/crate/roughness.jpg')
 
 const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
 const boxMaterial = new THREE.MeshStandardMaterial({map: boxColorTexture, normalMap: boxNormalTexture, roughnessMap: boxRoughnessTexture, aoMap: boxOclussionTexture});
-const box = new THREE.Mesh(boxGeometry, boxMaterial);
-box.position.set(2, 0.5, 3);
-box.name = "Box";
-scene.add(box);
+let objectsToUpdate = [];
 
-for (let i = 0; i < 20; i++){
-    let boxes = new THREE.Mesh(boxGeometry, boxMaterial);
-    boxes.position.set(Math.random() * 200 - 100, 0.5, Math.random() * 200 - 100);
-    boxes.name = "boxes" + i;
-    scene.add(boxes);
+const createCrate = (width, height, depth, position, name) => {
+    // Three.js mesh
+    const mesh = new THREE.Mesh(boxGeometry, boxMaterial);
+    mesh.scale.set(width, height, depth);
+    mesh.castShadow = true;
+    mesh.name = name;
+    mesh.position.copy(position);
+    scene.add(mesh);
+
+    // Cannon.js body
+    const shape = new CANNON.Box(new CANNON.Vec3(width * 0.5, height * 0.5, depth * 0.5));
+
+    const body = new CANNON.Body({
+        mass: 1,
+        position: new CANNON.Vec3(0, 3, 0),
+        shape: shape,
+        material: defaultMaterial
+    });
+    body.position.copy(position);
+    world.addBody(body);
+
+    // Save in objects
+    objectsToUpdate.push({ mesh, body });
 }
 
-const boxShape = new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5));
-const boxBody = new CANNON.Body({
-    mass: 1,
-    position: new CANNON.Vec3(2, 1, 3),
-    shape: boxShape,
-    material: defaultMaterial
-});
-boxBody.addShape(boxShape);
-world.addBody(boxBody);
+for (let i = 0; i < 20; i++){
+    createCrate(1, 1, 1, { x: Math.random() * 100 - 50, y:  0.5, z: Math.random() * 100 - 50}, `Box ${i}` )
+}
 
 // Sphere - ball
 const sphereGeometry = new THREE.SphereGeometry(0.2, 8, 6);
@@ -605,8 +616,6 @@ const tick = () => {
         // Update physics
         world.step(1 / 60, deltaTime, 3);
         mannequin.position.set(mannequinBody.position.x, mannequinBody.position.y - 1.0, mannequinBody.position.z);
-        box.position.copy(boxBody.position);
-        box.quaternion.copy(boxBody.quaternion);
 
         sphere.position.copy(sphereBody.position);
 
@@ -624,8 +633,13 @@ const tick = () => {
         }
     }
 
+    for(const object of objectsToUpdate) {
+        object.mesh.position.copy(object.body.position);
+        object.mesh.quaternion.copy(object.body.quaternion);
+    }
+
     stats.update();
-    // cannonDebugRenderer.update(); 
+    cannonDebugRenderer.update(); 
 
     // Render
     renderer.render(scene, camera);
@@ -669,7 +683,7 @@ const raycaster = new THREE.Raycaster();
 let currentIntersect = null;
 window.addEventListener('click', () => {
     raycaster.setFromCamera(mouse, camera);
-    const objectsToTest = [head, mannequin,box];
+    const objectsToTest = [head, mannequin];
     const intersects = raycaster.intersectObjects(objectsToTest, true);
     if(intersects.length) {
         currentIntersect = intersects[0]; // ordenados por distancia, va a ser el más cercano
