@@ -17,9 +17,9 @@ import CANNON from 'cannon';
 // Debug
 const gui = new dat.GUI();
 const debugObject = {
-    islandColor: '#dbe7f2',
+    islandColor: '#000f20',
     boundingSphereColor: '#06012d',
-    moonLightColor: '#c39700'
+    moonLightColor: '#c3002d'
 };
 
 gui.addColor(debugObject, 'islandColor').onChange(() => {islandMaterial.color.set(debugObject.islandColor)});
@@ -157,15 +157,18 @@ const textureLoader = new THREE.TextureLoader(manager)
 const colorTexture = textureLoader.load('./textures/moon/moon_color.jpg')
 const normalTexture = textureLoader.load('./textures/moon/moon_norm.jpg')
 
-const moonGeometry = new THREE.SphereGeometry( 3, 32, 32 );
+const moonGeometry = new THREE.SphereGeometry( 12, 32, 32 );
 const moonMaterial = new THREE.MeshStandardMaterial( {map: colorTexture, normalMap: normalTexture, emissive: debugObject.moonLightColor, emissiveIntensity: 0.2 } );
 const moon = new THREE.Mesh( moonGeometry, moonMaterial );
-moon.position.set( 0, 15, 55);
+moon.position.set( 0, 70, 250);
 scene.add( moon );
 
 const folderMoon = gui.addFolder( 'Moon' );
 folderMoon.add( moonMaterial, 'emissiveIntensity', 0, 5, 0.1 );
 folderMoon.addColor(debugObject, 'moonLightColor').onChange(() => {moonMaterial.emissive.set(debugObject.moonLightColor)});
+folderMoon.add( moon.position, 'x', -100, 100, 0.1 );
+folderMoon.add( moon.position, 'y', -100, 100, 0.1 );
+folderMoon.add( moon.position, 'z', -100, 100, 0.1 );
 
 
 /************ Sky ************/
@@ -202,7 +205,7 @@ let water = new Water(
     {
         textureWidth: 512,
         textureHeight: 512,
-        waterNormals: new THREE.TextureLoader().load( './textures/waternormals.jpg', function ( texture ) {
+        waterNormals: textureLoader.load( './textures/waternormals.jpg', function ( texture ) {
 
             texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
 
@@ -228,17 +231,24 @@ folderWater.add( waterUniforms.size, 'value', 0.1, 10, 0.1 ).name( 'size' );
 folderWater.add( waterUniforms.alpha, 'value', 0.9, 1, .001 ).name( 'alpha' );
 
 /************ Island ************/
-const islandGeometry = new THREE.PlaneGeometry(100, 100);
-const islandMaterial = new THREE.MeshStandardMaterial({color: debugObject.islandColor});
+const islandDisplacementTexture = textureLoader.load('./textures/terrain/displacement.png')
+
+const islandGeometry = new THREE.PlaneGeometry(500, 500, 250, 250);
+const islandMaterial = new THREE.MeshStandardMaterial({color: debugObject.islandColor, displacementMap: islandDisplacementTexture, displacementScale: 100});
 const island = new THREE.Mesh(islandGeometry, islandMaterial);
 island.rotation.x = - Math.PI * 0.5;
-island.position.y = -0.1;
+island.position.y = - 20;
 scene.add(island);
+
+const terrainFolder = gui.addFolder("Terrain");
+terrainFolder.add(island.position, 'y').step(0.1).min(-50).max(50);
+terrainFolder.add(island.material, 'displacementScale').step(0.1).min(-100).max(200);
 
 const islandShape = new CANNON.Plane() // plano infinito
 const islandBody = new CANNON.Body()
 islandBody.mass = 0;
 islandBody.quaternion.setFromAxisAngle(new CANNON.Vec3(- 1, 0, 0), Math.PI * 0.5);
+// keep base terrain physic position in the same place por character and elements support
 islandBody.position.y = -0.1;
 islandBody.material = defaultMaterial;
 islandBody.addShape(islandShape);
@@ -270,7 +280,7 @@ box.position.set(2, 0.5, 3);
 box.name = "Box";
 scene.add(box);
 
-for (let i = 0; i < 60; i++){
+for (let i = 0; i < 20; i++){
     let boxes = new THREE.Mesh(boxGeometry, boxMaterial);
     boxes.position.set(Math.random() * 200 - 100, 0.5, Math.random() * 200 - 100);
     boxes.name = "boxes" + i;
@@ -309,7 +319,7 @@ world.addBody(sphereBody);
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
 scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0x800000, 1);
+const directionalLight = new THREE.DirectionalLight(0x800000, 5);
 // directionalLight.castShadow = true;
 // directionalLight.shadow.mapSize.set(1024, 1024);
 // directionalLight.shadow.camera.far = 65;
@@ -349,7 +359,7 @@ window.addEventListener('resize', () => {
 
 /************ Camera ************/
 // Base camera
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100);
+const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 250);
 scene.add(camera);
 
 // Orbit Controls
