@@ -7,6 +7,10 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import Stats from 'three/examples/jsm/libs/stats.module';
 import { Water } from 'three/examples/jsm/objects/Water.js';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
+// import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
+// import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
+// import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
+// import { RGBShiftShader } from 'three/examples/jsm/shaders/RGBShiftShader.js'
 import * as dat from 'dat.gui';
 import CANNON from 'cannon';
 // import CannonDebugRenderer from './utils/cannonDebugRenderer.js';
@@ -72,7 +76,29 @@ const defaultContactMaterial = new CANNON.ContactMaterial(
         restitution: 0.7
     }
 );
+
+const heavyMaterial = new CANNON.Material('heavy');
+const heavyDefaultContactMaterial = new CANNON.ContactMaterial(
+    heavyMaterial,
+    defaultMaterial,
+    {
+        friction: 0.7,
+        restitution: 0.1
+    }
+);
+
+const heavyHeavyContactMaterial = new CANNON.ContactMaterial(
+    heavyMaterial,
+    heavyMaterial,
+    {
+        friction: 1,
+        restitution: 0
+    }
+);
+
 world.addContactMaterial(defaultContactMaterial);
+world.addContactMaterial(heavyDefaultContactMaterial);
+world.addContactMaterial(heavyHeavyContactMaterial);
 
 /************ Models & animations ************/
 let mixer = null;
@@ -85,7 +111,6 @@ const gltfLoader = new GLTFLoader(manager);
 const fbxLoader = new FBXLoader(manager);
 
 gltfLoader.load("./models/mannequin/mannequin.glb", model => {
-    // console.log(model);
     mannequin = model.scene;
     // mannequin.traverse( 
     //     function(node) { 
@@ -120,8 +145,9 @@ gltfLoader.load("./models/mannequin/mannequin.glb", model => {
         mass: 50,
         position: new CANNON.Vec3(0, 1, 0),
         shape: mannequinObject,
-        material: defaultMaterial
+        material: heavyMaterial
     });
+    mannequinBody.sleepSpeedLimit = 0.5;
     mannequinBody.angularDamping = 1;
     world.addBody(mannequinBody);
 
@@ -273,8 +299,8 @@ const boxRoughnessTexture = textureLoader.load('./textures/crate/roughness.jpg')
 
 const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
 const boxMaterial = new THREE.MeshStandardMaterial({map: boxColorTexture, normalMap: boxNormalTexture, roughnessMap: boxRoughnessTexture, aoMap: boxOclussionTexture});
-let objectsToUpdate = [];
 
+let objectsToUpdate = [];
 const createCrate = (width, height, depth, position, rotation, name) => {
     // Three.js mesh
     const mesh = new THREE.Mesh(boxGeometry, boxMaterial);
@@ -292,9 +318,10 @@ const createCrate = (width, height, depth, position, rotation, name) => {
         mass: 1,
         position: new CANNON.Vec3(0, 3, 0),
         shape: shape,
-        material: defaultMaterial
+        material: heavyMaterial
     });
     body.position.copy(position);
+    body.sleepSpeedLimit = 0.5;
     body.quaternion.copy(mesh.quaternion);
     world.addBody(body);
 
@@ -375,6 +402,8 @@ window.addEventListener('resize', () => {
     // Update renderer
     renderer.setSize(sizes.width, sizes.height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // Update effect composer
+    // effectComposer.setSize(sizes.width, sizes.height)
 });
 
 /************ Camera ************/
@@ -394,6 +423,7 @@ let modelState = {
     run: false,
     autoCamera: true,
     dance: false,
+    jump: false
 };
 
 const danceArray = ['macarena', "wave", "swing"];
@@ -414,8 +444,11 @@ function onDocumentKeyDown(event) {
             break;
         // case 17: // control - crouch / use alternative key for mac
         //     break;
-        // case 32: // spacebar - jump
-        //     break;
+        case 32: // spacebar - jump
+            if(mannequin.position.y < 1) {
+                modelState.jump = true;
+            }
+            break;
         case 90: // letter z - dance
             if(!modelState.dance) {
                 let random = Math.floor(Math.random() * danceArray.length);
@@ -540,6 +573,15 @@ function updateMannequin() {
         goToIdle("running");
     }
 
+    if(modelState.jump){
+        if (mannequinBody.position.y > 5) {
+            mannequinBody.position.y -=  0.1;
+            modelState.jump = false;
+        } else {
+            mannequinBody.position.y += 0.5;
+        } 
+    } 
+
     // run
     if(!modelState.run && animationActions.running && animationActions.running.weight > 0) {
         goToIdle("running");
@@ -603,6 +645,15 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
+/************ Postprocessing ************/
+// const effectComposer = new EffectComposer(renderer)
+// effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+// effectComposer.setSize(sizes.width, sizes.height)
+// const renderPass = new RenderPass(scene, camera)
+// effectComposer.addPass(renderPass)
+// const rgbShiftPass = new ShaderPass(RGBShiftShader)
+// effectComposer.addPass(rgbShiftPass)
+
 /************ Animate ************/
 const clock = new THREE.Clock();
 let previousTime = 0;
@@ -650,6 +701,7 @@ const tick = () => {
 
     // Render
     renderer.render(scene, camera);
+    // effectComposer.render()
 
     // Call tick again on the next frame
     window.requestAnimationFrame(tick);
