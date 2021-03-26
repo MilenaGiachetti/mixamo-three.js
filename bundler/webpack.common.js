@@ -37,7 +37,10 @@ module.exports = {
             // JS
             {
                 test: /\.js$/,
-                exclude: /node_modules/,
+                exclude: [
+                    /node_modules/,
+                    '/src/static/'
+                ],
                 use:
                 [
                     'babel-loader'

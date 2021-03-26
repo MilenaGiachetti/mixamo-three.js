@@ -561,12 +561,12 @@ function updateMannequin() {
         if(modelState.run) {
             animationActions.walking.weight = animationActions.walking.weight <= 0 ? 0 : animationActions.walking.weight - 0.2;
             animationActions.running.weight = animationActions.running.weight >= 3 ? 3 :  animationActions.running.weight + 0.5;
-            mannequinBody.position.x +=  Math.cos(angle) * 0.1;
-            mannequinBody.position.z +=  Math.sin(angle) * 0.1;
+            mannequinBody.position.x +=  Math.cos(angle) * 0.125;
+            mannequinBody.position.z +=  Math.sin(angle) * 0.125;
         } else {
             animationActions.walking.weight = animationActions.walking.weight >= 3 ? 3 : animationActions.walking.weight + 0.2;
-            mannequinBody.position.x +=  Math.cos(angle) * 0.025;
-            mannequinBody.position.z +=  Math.sin(angle) * 0.025;
+            mannequinBody.position.x +=  Math.cos(angle) * 0.075;
+            mannequinBody.position.z +=  Math.sin(angle) * 0.075;
         }
     } else {
         goToIdle("walking");
@@ -594,8 +594,8 @@ function updateMannequin() {
     if(modelState.backward) {
         animationActions.idle.stop();
         let angle = - mannequin.rotation.y + Math.PI * 0.5;
-        mannequinBody.position.x -=  Math.cos(angle) * 0.02;
-        mannequinBody.position.z -=  Math.sin(angle) * 0.02;
+        mannequinBody.position.x -=  Math.cos(angle) * 0.05;
+        mannequinBody.position.z -=  Math.sin(angle) * 0.05;
     } else {
         goToIdle("walking_backwards");
     }
