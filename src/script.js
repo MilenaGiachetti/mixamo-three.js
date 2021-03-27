@@ -1,7 +1,6 @@
 import './style.css';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import Stats from 'three/examples/jsm/libs/stats.module';
@@ -14,8 +13,6 @@ import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import * as dat from 'dat.gui';
 import CANNON from 'cannon';
 // import CannonDebugRenderer from './utils/cannonDebugRenderer.js';
-// import waterVertexShader from './shaders/water/vertex.glsl';
-// import waterFragmentShader from './shaders/water/fragment.glsl';
 
 /************ Base ************/
 // Debug
@@ -25,12 +22,8 @@ const debugObject = {
     moonLightColor: '#c3002d'
 };
 
-const guiAnimations = {};
-const animationsFolder = gui.addFolder("Animations");
-
 const stats = Stats();
 document.body.appendChild(stats.dom);
-
 
 // Control instructions
 document.getElementById("controlsOpen").addEventListener("click", ()=>{
@@ -108,10 +101,11 @@ let mannequinBody = null;
 
 // Mannequin
 const gltfLoader = new GLTFLoader(manager);
-const fbxLoader = new FBXLoader(manager);
 
 gltfLoader.load("./models/mannequin/mannequin.glb", model => {
     mannequin = model.scene;
+    mixer = new THREE.AnimationMixer(mannequin);
+
     // mannequin.traverse( 
     //     function(node) { 
     //         if(node instanceof THREE.Mesh) { 
@@ -119,26 +113,14 @@ gltfLoader.load("./models/mannequin/mannequin.glb", model => {
     //         } 
     //     } 
     // );
-    mixer = new THREE.AnimationMixer(mannequin);
+
     // Mannequin animations
-    let animationsToLoad = ["walking", "idle", "walking_backwards", "running", "left_turn", "right_turn", "macarena", "wave", "swing"];
-    for(const animationToLoad of animationsToLoad){
-        fbxLoader.load(`./models/mannequin/animations/${animationToLoad}.fbx`,
-            (object) => {
-                let animationAction = mixer.clipAction((object).animations[0]);
-                animationActions[animationToLoad] = animationAction;
-                animationActions[animationToLoad].clampWhenFinished = true;
-                guiAnimations[animationToLoad] = () => {
-                    mixer.stopAllAction();
-                    animationActions[animationToLoad].play();
-                };
-                animationsFolder.add(guiAnimations, animationToLoad);
-                if(animationToLoad == "idle") {
-                    animationActions.idle.play();
-                }
-            }
-        )
+    for(const animation of model.animations){
+        let animationAction = mixer.clipAction(animation);
+        animationActions[animation.name] = animationAction;
+        animationActions[animation.name].clampWhenFinished = true;
     }
+
     // Add mannequin physic object
     const mannequinObject = new CANNON.Box(new CANNON.Vec3(0.75, 1, 0.75));
     mannequinBody = new CANNON.Body({
@@ -447,6 +429,8 @@ function onDocumentKeyDown(event) {
         case 32: // spacebar - jump
             if(mannequin.position.y < 1) {
                 modelState.jump = true;
+                // animationActions.jump.weight = 1;
+                // animationActions.jump.play();
             }
             break;
         case 90: // letter z - dance
@@ -475,6 +459,7 @@ function onDocumentKeyDown(event) {
                     animationActions.running.play();
                 } else {
                     animationActions.walking.weight = 1;
+                    animationActions.walking.timeScale = 0.7/1;
                     animationActions.walking.play();
                 }
             }
@@ -573,14 +558,14 @@ function updateMannequin() {
         goToIdle("running");
     }
 
+    // jump
     if(modelState.jump){
         if (mannequinBody.position.y > 5) {
-            mannequinBody.position.y -=  0.1;
             modelState.jump = false;
         } else {
             mannequinBody.position.y += 0.5;
         } 
-    } 
+    }
 
     // run
     if(!modelState.run && animationActions.running && animationActions.running.weight > 0) {
