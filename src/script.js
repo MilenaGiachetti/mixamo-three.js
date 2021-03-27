@@ -14,16 +14,22 @@ import * as dat from 'dat.gui';
 import CANNON from 'cannon';
 // import CannonDebugRenderer from './utils/cannonDebugRenderer.js';
 
+const DEBUG = window.location.hash === "#debug" ? true : false;
+
 /************ Base ************/
 // Debug
-const gui = new dat.GUI();
 const debugObject = {
     islandColor: '#000f20',
     moonLightColor: '#c3002d'
 };
 
-const stats = Stats();
-document.body.appendChild(stats.dom);
+let gui,
+    stats;
+if (DEBUG) {
+    gui = new dat.GUI();
+    stats = Stats();
+    document.body.appendChild(stats.dom);
+}
 
 // Control instructions
 document.getElementById("controlsOpen").addEventListener("click", ()=>{
@@ -139,7 +145,12 @@ gltfLoader.load("./models/mannequin/mannequin.glb", model => {
 /************ Head ************/
 let head;
 const objLoader = new OBJLoader(manager);
-const folderHead = gui.addFolder( 'Head' );
+
+let folderHead;
+if (DEBUG) {
+    folderHead = gui.addFolder( 'Head' );
+}
+
 objLoader.load("./models/head/head.OBJ", model => {
     head = model;
     model.children[0].material.color = new THREE.Color("#fff2ff");
@@ -150,12 +161,14 @@ objLoader.load("./models/head/head.OBJ", model => {
     model.rotation.x = Math.PI * 1.75;
     // model.rotateX(9);
     scene.add(model);
-    folderHead.add( head.rotation, 'x', 0,  Math.PI * 2, 0.0001 );
-    folderHead.add( head.rotation, 'y', 0,  Math.PI * 2, 0.0001 );
-    folderHead.add( head.rotation, 'z', 0,  Math.PI * 2, 0.0001 );
-    folderHead.add( head.position, 'x', -60,  60, 0.1 );
-    folderHead.add( head.position, 'y', -60,  60, 0.1 );
-    folderHead.add( head.position, 'z', -60,  60, 0.1 );
+    if (DEBUG) {
+        folderHead.add( head.rotation, 'x', 0,  Math.PI * 2, 0.0001 );
+        folderHead.add( head.rotation, 'y', 0,  Math.PI * 2, 0.0001 );
+        folderHead.add( head.rotation, 'z', 0,  Math.PI * 2, 0.0001 );
+        folderHead.add( head.position, 'x', -60,  60, 0.1 );
+        folderHead.add( head.position, 'y', -60,  60, 0.1 );
+        folderHead.add( head.position, 'z', -60,  60, 0.1 );
+    }
 });
 
 const textureLoader = new THREE.TextureLoader(manager)
@@ -167,14 +180,6 @@ const moonMaterial = new THREE.MeshStandardMaterial( {map: colorTexture, normalM
 const moon = new THREE.Mesh( moonGeometry, moonMaterial );
 moon.position.set( 0, 70, 250);
 scene.add( moon );
-
-const folderMoon = gui.addFolder( 'Moon' );
-folderMoon.add( moonMaterial, 'emissiveIntensity', 0, 5, 0.1 );
-folderMoon.addColor(debugObject, 'moonLightColor').onChange(() => {moonMaterial.emissive.set(debugObject.moonLightColor)});
-folderMoon.add( moon.position, 'x', -100, 100, 0.1 );
-folderMoon.add( moon.position, 'y', -100, 100, 0.1 );
-folderMoon.add( moon.position, 'z', -100, 100, 0.1 );
-
 
 /************ Sky ************/
 let sun = new THREE.Vector3();
@@ -196,10 +201,6 @@ const parameters = {
     inclination: 0.488,
     azimuth: 0.75
 };
-
-const folderSky = gui.addFolder( 'Sky' );
-folderSky.add( parameters, 'inclination', 0, 0.5, 0.0001 ).onChange( updateSun );
-folderSky.add( parameters, 'azimuth', 0, 1, 0.0001 ).onChange( updateSun );
 
 /************ Sea ************/
 // Water
@@ -230,10 +231,6 @@ scene.add( water );
 
 const waterUniforms = water.material.uniforms;
 
-const folderWater = gui.addFolder( 'Water' );
-folderWater.add( waterUniforms.distortionScale, 'value', 0, 8, 0.1 ).name( 'distortionScale' );
-folderWater.add( waterUniforms.size, 'value', 0.1, 10, 0.1 ).name( 'size' );
-folderWater.add( waterUniforms.alpha, 'value', 0.9, 1, .001 ).name( 'alpha' );
 
 /************ Island ************/
 const islandDisplacementTexture = textureLoader.load('./textures/terrain/displacement.png')
@@ -244,11 +241,6 @@ const island = new THREE.Mesh(islandGeometry, islandMaterial);
 island.rotation.x = - Math.PI * 0.5;
 island.position.y = - 20;
 scene.add(island);
-
-const terrainFolder = gui.addFolder("Terrain");
-terrainFolder.add(island.position, 'y').step(0.1).min(-50).max(50);
-terrainFolder.add(island.material, 'displacementScale').step(0.1).min(-100).max(200);
-terrainFolder.addColor(debugObject, 'islandColor').onChange(() => {islandMaterial.color.set(debugObject.islandColor)});
 
 const islandShape = new CANNON.Plane() // plano infinito
 const islandBody = new CANNON.Body()
@@ -359,14 +351,9 @@ const directionalLight = new THREE.DirectionalLight(0x800000, 5);
 directionalLight.position.set(0, 15, 55);
 scene.add(directionalLight);
 
-const lightsFolder = gui.addFolder("Lights");
-lightsFolder.add(directionalLight, 'intensity').step(0.1).min(0);
-
 const pointLight = new THREE.PointLight(0x000080, 0.6, 100);
 pointLight.position.set(5, 15, 55);
 scene.add(pointLight);
-
-lightsFolder.add(pointLight, 'intensity').step(0.1).min(0);
 
 /************ Sizes ************/
 const sizes = {
@@ -681,7 +668,9 @@ const tick = () => {
         object.mesh.quaternion.copy(object.body.quaternion);
     }
 
-    stats.update();
+    if (DEBUG) {
+        stats.update();
+    }
     // cannonDebugRenderer.update(); 
 
     // Render
@@ -739,3 +728,30 @@ window.addEventListener('click', () => {
         alert(currentIntersect.object.name);
     }
 })
+
+if (DEBUG) {
+    const folderMoon = gui.addFolder( 'Moon' );
+    folderMoon.add( moonMaterial, 'emissiveIntensity', 0, 5, 0.1 );
+    folderMoon.addColor(debugObject, 'moonLightColor').onChange(() => {moonMaterial.emissive.set(debugObject.moonLightColor)});
+    folderMoon.add( moon.position, 'x', -100, 100, 0.1 );
+    folderMoon.add( moon.position, 'y', -100, 100, 0.1 );
+    folderMoon.add( moon.position, 'z', -100, 100, 0.1 );
+
+    const folderSky = gui.addFolder( 'Sky' );
+    folderSky.add( parameters, 'inclination', 0, 0.5, 0.0001 ).onChange( updateSun );
+    folderSky.add( parameters, 'azimuth', 0, 1, 0.0001 ).onChange( updateSun );
+
+    const folderWater = gui.addFolder( 'Water' );
+    folderWater.add( waterUniforms.distortionScale, 'value', 0, 8, 0.1 ).name( 'distortionScale' );
+    folderWater.add( waterUniforms.size, 'value', 0.1, 10, 0.1 ).name( 'size' );
+    folderWater.add( waterUniforms.alpha, 'value', 0.9, 1, .001 ).name( 'alpha' );
+
+    const terrainFolder = gui.addFolder("Terrain");
+    terrainFolder.add(island.position, 'y').step(0.1).min(-50).max(50);
+    terrainFolder.add(island.material, 'displacementScale').step(0.1).min(-100).max(200);
+    terrainFolder.addColor(debugObject, 'islandColor').onChange(() => {islandMaterial.color.set(debugObject.islandColor)});
+
+    const lightsFolder = gui.addFolder("Lights");
+    lightsFolder.add(directionalLight, 'intensity').step(0.1).min(0);
+    lightsFolder.add(pointLight, 'intensity').step(0.1).min(0);
+}
