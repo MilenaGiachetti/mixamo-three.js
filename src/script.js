@@ -405,6 +405,7 @@ function onDocumentKeyDown(event) {
             if(!modelState.run) {
                 if(modelState.forward) {
                     animationActions.running.weight = 1;
+                    animationActions.running.timeScale = 2/1;
                     animationActions.running.play();
                 } 
             }
@@ -416,8 +417,9 @@ function onDocumentKeyDown(event) {
         case 32: // spacebar - jump
             if(mannequin.position.y < 1) {
                 modelState.jump = true;
-                // animationActions.jump.weight = 1;
-                // animationActions.jump.play();
+                animationActions.jump.weight = 1;
+                animationActions.jump.timeScale = 0.75/1;
+                animationActions.jump.play();
             }
             break;
         case 90: // letter z - dance
@@ -443,10 +445,10 @@ function onDocumentKeyDown(event) {
             if(!modelState.forward) {
                 if(modelState.run) {
                     animationActions.running.weight = 1;
+                    animationActions.running.timeScale = 2/1;
                     animationActions.running.play();
                 } else {
                     animationActions.walking.weight = 1;
-                    animationActions.walking.timeScale = 0.7/1;
                     animationActions.walking.play();
                 }
             }
@@ -518,6 +520,10 @@ function onDocumentKeyUp(event) {
 
 function goToIdle(animation) {
     if(animationActions[animation] && animationActions[animation].weight > 0) {
+        if(animation == "jump") {
+            animationActions[animation].weight -= 0.01;
+            return;
+        }
         animationActions[animation].weight -= 0.2;
     } else if (animationActions[animation]) {
         animationActions[animation].stop;
@@ -547,11 +553,15 @@ function updateMannequin() {
 
     // jump
     if(modelState.jump){
+        animationActions.running.weight = 0;
+        animationActions.walking.weight = 0;
         if (mannequinBody.position.y > 5) {
             modelState.jump = false;
         } else {
-            mannequinBody.position.y += 0.5;
+            mannequinBody.position.y += 0.25;
         } 
+    } else if (animationActions.jump.weight > 0) {
+        goToIdle("jump");
     }
 
     // run
