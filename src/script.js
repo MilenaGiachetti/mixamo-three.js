@@ -154,7 +154,7 @@ if (DEBUG) {
 objLoader.load("./models/head/head.OBJ", model => {
     head = model;
     model.children[0].material.color = new THREE.Color("#fff2ff");
-    model.scale.set(3, 3, 3);
+    model.scale.set(3, 2.5, 3);
     model.position.set( -12, 3.1, 40);
     model.rotation.reorder('YXZ')
     model.rotation.y = Math.PI * 0.05;
@@ -171,6 +171,28 @@ objLoader.load("./models/head/head.OBJ", model => {
     }
 });
 
+/************ Computer ************/
+let computer;
+
+objLoader.load("./models/computer/computer.OBJ", model => {
+    computer = model;
+    model.scale.set(0.1, 0.1, 0.1);
+    model.position.set( 12, -0.1, 23);
+    model.rotation.y = - Math.PI * 0.75;
+    scene.add(model);
+});
+
+/************ Television ************/
+let television;
+
+objLoader.load("./models/television/television.OBJ", model => {
+    television = model;
+    model.scale.set(3, 3, 3);
+    model.position.set( 2, -0.1, -20);
+    scene.add(model);
+});
+
+/************ Moon ************/
 const textureLoader = new THREE.TextureLoader(manager)
 const colorTexture = textureLoader.load('./textures/moon/moon_color.jpg')
 const normalTexture = textureLoader.load('./textures/moon/moon_norm.jpg')
@@ -341,6 +363,14 @@ const points = [
     {
         position: new THREE.Vector3(-12, 3.1, 40), 
         element: document.querySelector("#point-0")
+    },
+    {
+        position: new THREE.Vector3(12, 3, 23), 
+        element: document.querySelector("#point-1")
+    },
+    {
+        position: new THREE.Vector3( 2, 3, -20), 
+        element: document.querySelector("#point-2")
     }
 ]
 
@@ -647,6 +677,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 /************ Animate ************/
 const clock = new THREE.Clock();
 let previousTime = 0;
+var frustum = new THREE.Frustum();
 
 const tick = () => {
     const elapsedTime = clock.getElapsedTime();
@@ -694,8 +725,16 @@ const tick = () => {
     // Move points
     for(const point of points) {
         const screenPosition = point.position.clone();
-        screenPosition.project(camera);
         
+        frustum.setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));  
+        if (frustum.containsPoint(screenPosition)) {
+            point.element.classList.add('visible');
+        } else {
+            point.element.classList.remove('visible');
+        }
+
+        screenPosition.project(camera);
+
         const translateX = screenPosition.x * sizes.width * 0.5;
         const translateY = - screenPosition.y * sizes.height * 0.5;
         point.element.style.transform = `translate(${translateX}px, ${translateY}px)`;
