@@ -336,6 +336,14 @@ for (let i = 0; i < 20; i++){
     createSphere(Math.random() + 0.2, { x: Math.random() * 100 - 50, y:  0.5, z: Math.random() * 100 - 50}, `Ball ${i}` )
 }
 
+/************ Points ************/
+const points = [
+    {
+        position: new THREE.Vector3(-12, 3.1, 40), 
+        element: document.querySelector("#point-0")
+    }
+]
+
 /************ Lights ************/
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
 scene.add(ambientLight);
@@ -683,6 +691,16 @@ const tick = () => {
     }
     // cannonDebugRenderer.update(); 
 
+    // Move points
+    for(const point of points) {
+        const screenPosition = point.position.clone();
+        screenPosition.project(camera);
+        
+        const translateX = screenPosition.x * sizes.width * 0.5;
+        const translateY = - screenPosition.y * sizes.height * 0.5;
+        point.element.style.transform = `translate(${translateX}px, ${translateY}px)`;
+    }
+
     // Render
     renderer.render(scene, camera);
     // effectComposer.render()
@@ -714,30 +732,30 @@ updateSun();
 
 /************ Raycaster ************/
 /* Mouse */
-const mouse = new THREE.Vector2(); // 2 porque es sólo x e y
+// const mouse = new THREE.Vector2(); // 2 porque es sólo x e y
 
-window.addEventListener('mousemove', (event) => {
-    mouse.x = event.clientX / sizes.width * 2 - 1;
-    mouse.y = - (event.clientY / sizes.height) * 2 + 1;
-})
+// window.addEventListener('mousemove', (event) => {
+//     mouse.x = event.clientX / sizes.width * 2 - 1;
+//     mouse.y = - (event.clientY / sizes.height) * 2 + 1;
+// })
 
-const raycaster = new THREE.Raycaster();
+// const raycaster = new THREE.Raycaster();
 
-let currentIntersect = null;
-window.addEventListener('click', () => {
-    raycaster.setFromCamera(mouse, camera);
-    const objectsToTest = [head, mannequin];
-    const intersects = raycaster.intersectObjects(objectsToTest, true);
-    if(intersects.length) {
-        currentIntersect = intersects[0]; // ordenados por distancia, va a ser el más cercano
-    } else {
-        currentIntersect = null;
-    }
-    if(currentIntersect) {
-        console.log(currentIntersect);
-        alert(currentIntersect.object.name);
-    }
-})
+// let currentIntersect = null;
+// window.addEventListener('click', () => {
+//     raycaster.setFromCamera(mouse, camera);
+//     const objectsToTest = [head, mannequin];
+//     const intersects = raycaster.intersectObjects(objectsToTest, true);
+//     if(intersects.length) {
+//         currentIntersect = intersects[0]; // ordenados por distancia, va a ser el más cercano
+//     } else {
+//         currentIntersect = null;
+//     }
+//     if(currentIntersect) {
+//         console.log(currentIntersect);
+//         alert(currentIntersect.object.name);
+//     }
+// })
 
 if (DEBUG) {
     const folderMoon = gui.addFolder( 'Moon' );
