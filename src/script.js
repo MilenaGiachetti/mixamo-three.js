@@ -173,13 +173,40 @@ objLoader.load("./models/head/head.OBJ", model => {
 
 /************ Computer ************/
 let computer;
+// let compHead = gui.addFolder( 'comp' );
+const quaternion = new THREE.Quaternion();
 
 objLoader.load("./models/computer/computer.OBJ", model => {
     computer = model;
     model.scale.set(0.1, 0.1, 0.1);
     model.position.set( 22, -0.1, 23);
-    model.rotation.y = - Math.PI * 0.75;
+    // model.rotation.y = - Math.PI * 0.75;
     scene.add(model);
+    const computerBody = new CANNON.Body();
+    computerBody.mass = 0;
+    // computerBody.quaternion.setFromAxisAngle(new CANNON.Vec3(- 1, 0, 0), Math.PI * 0.5);
+    // keep base terrain physic position in the same place por character and elements support
+    computerBody.position.set( 24.5, -0.1, 19.1);
+    // computerBody.quaternion.copy(computer.quaternion);
+    computerBody.material = defaultMaterial;
+
+    const computerBaseShape = new CANNON.Box(new CANNON.Vec3(2.5, 1.5, 1.7));
+    const computerStandShape = new CANNON.Box(new CANNON.Vec3(0.7, 0.5, 0.8));
+    const computerKeyboardShape = new CANNON.Box(new CANNON.Vec3(2.5, 0.3, 1.2));
+    const computerScreenShape = new CANNON.Box(new CANNON.Vec3(2, 1.5, 1.5));
+
+    computerBody.addShape(computerBaseShape);
+    // shape, offset, quaternion
+    computerBody.addShape(computerBaseShape);
+    computerBody.addShape(computerStandShape, new CANNON.Vec3(0, 2, 0.1));
+    computerBody.addShape(computerKeyboardShape, new CANNON.Vec3(0, 0, 2.7),
+    quaternion.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), Math.PI / 2 * 0.1 ));
+    computerBody.addShape(computerScreenShape, new CANNON.Vec3(0, 4, -0.4));
+
+    world.addBody(computerBody);
+    // compHead.add( computerBody.position, 'x', -60,  60, 0.1 );
+    // compHead.add( computerBody.position, 'y', -60,  60, 0.1 );
+    // compHead.add( computerBody.position, 'z', -60,  60, 0.1 );
 });
 
 /************ Television ************/
@@ -264,6 +291,7 @@ island.rotation.x = - Math.PI * 0.5;
 island.position.y = - 20;
 scene.add(island);
 
+// console.log(island.geometry.attributes.position);
 const islandShape = new CANNON.Plane() // plano infinito
 const islandBody = new CANNON.Body()
 islandBody.mass = 0;
@@ -273,18 +301,21 @@ islandBody.position.y = -0.25;
 islandBody.material = defaultMaterial;
 islandBody.addShape(islandShape);
 world.addBody(islandBody);
-// const geometry = new THREE.SphereGeometry(75, 8, 6);
-// const material = new THREE.MeshStandardMaterial({color: 0xEFD381});
-// const island = new THREE.Mesh(geometry, material);
-// island.position.y = -75;
-// scene.add(island);
 
-// const islandShape = new CANNON.Sphere(75);
-// const islandBody = new CANNON.Body();
-// islandBody.position.y = -75;
-// islandBody.mass = 0;
-// islandBody.addShape(islandShape);
-// world.addBody(islandBody);
+// var data = [];
+// for(var i = 0; i < 1000; i++){
+//     var y = 0.5 * Math.cos(0.2 * i);
+//     data.push(y);
+// }
+
+// // Create the heightfield shape
+// var heightfieldShape = new Heightfield(data, {
+//     elementSize: 2 // Distance between the data points in X and Y directions
+// });
+// var heightfieldBody = new Body();
+// heightfieldBody.addShape(heightfieldShape);
+// world.addBody(heightfieldBody);
+
 
 /************ Interactive elements ************/
 // Box
