@@ -115,13 +115,15 @@ gltfLoader.load("./models/mannequin/mannequin.glb", model => {
     }
 
     // Add mannequin physic object
-    const mannequinObject = new CANNON.Box(new CANNON.Vec3(0.75, 1, 0.75));
+    const mannequinBase = new CANNON.Box(new CANNON.Vec3(0.35, 0.5, 0.35));
+    const mannequinObject = new CANNON.Sphere(0.5);
     mannequinBody = new CANNON.Body({
         mass: 50,
         position: new CANNON.Vec3(0, 1, 0),
-        shape: mannequinObject,
         material: heavyMaterial
     });
+    mannequinBody.addShape(mannequinObject, new CANNON.Vec3(0, 0.3, 0));
+    mannequinBody.addShape(mannequinBase, new CANNON.Vec3(0, -0.5, 0));
     mannequinBody.sleepSpeedLimit = 0.5;
     mannequinBody.angularDamping = 1;
     world.addBody(mannequinBody);
