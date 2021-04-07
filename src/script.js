@@ -6,10 +6,6 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import Stats from 'three/examples/jsm/libs/stats.module';
 import { Water } from 'three/examples/jsm/objects/Water.js';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
-// import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
-// import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
-// import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
-// import { RGBShiftShader } from 'three/examples/jsm/shaders/RGBShiftShader.js'
 import * as dat from 'dat.gui';
 import CANNON from 'cannon';
 // import CannonDebugRenderer from './utils/cannonDebugRenderer.js';
@@ -111,15 +107,6 @@ const gltfLoader = new GLTFLoader(manager);
 gltfLoader.load("./models/mannequin/mannequin.glb", model => {
     mannequin = model.scene;
     mixer = new THREE.AnimationMixer(mannequin);
-
-    // mannequin.traverse( 
-    //     function(node) { 
-    //         if(node instanceof THREE.Mesh) { 
-    //             node.castShadow = true; 
-    //         } 
-    //     } 
-    // );
-
     // Mannequin animations
     for(const animation of model.animations){
         let animationAction = mixer.clipAction(animation);
@@ -195,8 +182,6 @@ objLoader.load("./models/computer/computer.OBJ", model => {
     scene.add(model);
     const computerBody = new CANNON.Body();
     computerBody.mass = 0;
-    // computerBody.quaternion.setFromAxisAngle(new CANNON.Vec3(- 1, 0, 0), Math.PI * 0.5);
-    // keep base terrain physic position in the same place por character and elements support
     computerBody.material = defaultMaterial;
 
     const computerBaseShape = new CANNON.Box(new CANNON.Vec3(2.5, 1.5, 1.7));
@@ -205,7 +190,6 @@ objLoader.load("./models/computer/computer.OBJ", model => {
     const computerScreenShape = new CANNON.Box(new CANNON.Vec3(2, 1.5, 1.5));
 
     computerBody.addShape(computerBaseShape);
-    // shape, offset, quaternion
     computerBody.addShape(computerBaseShape);
     computerBody.addShape(computerStandShape, new CANNON.Vec3(0, 2, 0.1));
     computerBody.addShape(computerKeyboardShape, new CANNON.Vec3(0, 0, 2.7),
@@ -260,7 +244,6 @@ scene.add( moon );
 let sun = new THREE.Vector3();
 
 // Skybox
-
 const sky = new Sky();
 sky.scale.setScalar( 10000 );
 scene.add( sky );
@@ -317,7 +300,6 @@ island.rotation.x = - Math.PI * 0.5;
 island.position.y = - 20;
 scene.add(island);
 
-// console.log(island.geometry.attributes.position);
 const islandShape = new CANNON.Plane() // plano infinito
 const islandBody = new CANNON.Body()
 islandBody.mass = 0;
@@ -327,21 +309,6 @@ islandBody.position.y = -0.25;
 islandBody.material = defaultMaterial;
 islandBody.addShape(islandShape);
 world.addBody(islandBody);
-
-// var data = [];
-// for(var i = 0; i < 1000; i++){
-//     var y = 0.5 * Math.cos(0.2 * i);
-//     data.push(y);
-// }
-
-// // Create the heightfield shape
-// var heightfieldShape = new Heightfield(data, {
-//     elementSize: 2 // Distance between the data points in X and Y directions
-// });
-// var heightfieldBody = new Body();
-// heightfieldBody.addShape(heightfieldShape);
-// world.addBody(heightfieldBody);
-
 
 /************ Interactive elements ************/
 // Box
@@ -436,13 +403,6 @@ const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
 scene.add(ambientLight);
 
 const directionalLight = new THREE.DirectionalLight(0x800000, 5);
-// directionalLight.castShadow = true;
-// directionalLight.shadow.mapSize.set(1024, 1024);
-// directionalLight.shadow.camera.far = 65;
-// directionalLight.shadow.camera.left = - 35;
-// directionalLight.shadow.camera.top = 20;
-// directionalLight.shadow.camera.right = 35;
-// directionalLight.shadow.camera.bottom = - 20;
 directionalLight.position.set(0, 15, 55);
 scene.add(directionalLight);
 
@@ -466,8 +426,6 @@ window.addEventListener('resize', () => {
     // Update renderer
     renderer.setSize(sizes.width, sizes.height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    // Update effect composer
-    // effectComposer.setSize(sizes.width, sizes.height)
 });
 
 /************ Camera ************/
@@ -717,19 +675,8 @@ function updateMannequin() {
 const renderer = new THREE.WebGLRenderer({
     canvas: canvas
 });
-// renderer.shadowMap.enabled = true;
-// renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-/************ Postprocessing ************/
-// const effectComposer = new EffectComposer(renderer)
-// effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-// effectComposer.setSize(sizes.width, sizes.height)
-// const renderPass = new RenderPass(scene, camera)
-// effectComposer.addPass(renderPass)
-// const rgbShiftPass = new ShaderPass(RGBShiftShader)
-// effectComposer.addPass(rgbShiftPass)
 
 /************ Animate ************/
 const clock = new THREE.Clock();
@@ -825,33 +772,6 @@ function updateSun() {
 }
 
 updateSun();
-
-/************ Raycaster ************/
-/* Mouse */
-// const mouse = new THREE.Vector2(); // 2 porque es sólo x e y
-
-// window.addEventListener('mousemove', (event) => {
-//     mouse.x = event.clientX / sizes.width * 2 - 1;
-//     mouse.y = - (event.clientY / sizes.height) * 2 + 1;
-// })
-
-// const raycaster = new THREE.Raycaster();
-
-// let currentIntersect = null;
-// window.addEventListener('click', () => {
-//     raycaster.setFromCamera(mouse, camera);
-//     const objectsToTest = [head, mannequin];
-//     const intersects = raycaster.intersectObjects(objectsToTest, true);
-//     if(intersects.length) {
-//         currentIntersect = intersects[0]; // ordenados por distancia, va a ser el más cercano
-//     } else {
-//         currentIntersect = null;
-//     }
-//     if(currentIntersect) {
-//         console.log(currentIntersect);
-//         alert(currentIntersect.object.name);
-//     }
-// })
 
 if (DEBUG) {
     const folderMoon = gui.addFolder( 'Moon' );
