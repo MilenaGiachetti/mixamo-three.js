@@ -173,21 +173,18 @@ objLoader.load("./models/head/head.OBJ", model => {
 
 /************ Computer ************/
 let computer;
-// let compHead = gui.addFolder( 'comp' );
 const quaternion = new THREE.Quaternion();
 
 objLoader.load("./models/computer/computer.OBJ", model => {
     computer = model;
     model.scale.set(0.1, 0.1, 0.1);
     model.position.set( 22, -0.1, 23);
-    // model.rotation.y = - Math.PI * 0.75;
     scene.add(model);
     const computerBody = new CANNON.Body();
     computerBody.mass = 0;
     // computerBody.quaternion.setFromAxisAngle(new CANNON.Vec3(- 1, 0, 0), Math.PI * 0.5);
     // keep base terrain physic position in the same place por character and elements support
     computerBody.position.set( 24.5, -0.1, 19.1);
-    // computerBody.quaternion.copy(computer.quaternion);
     computerBody.material = defaultMaterial;
 
     const computerBaseShape = new CANNON.Box(new CANNON.Vec3(2.5, 1.5, 1.7));
@@ -203,10 +200,11 @@ objLoader.load("./models/computer/computer.OBJ", model => {
     quaternion.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), Math.PI / 2 * 0.1 ));
     computerBody.addShape(computerScreenShape, new CANNON.Vec3(0, 4, -0.4));
 
+    computer.rotation.y = - Math.PI * 0.75;
+    computerBody.position.set(23 , -0.1, 27.5);
+    computerBody.quaternion.copy(computer.quaternion);
+
     world.addBody(computerBody);
-    // compHead.add( computerBody.position, 'x', -60,  60, 0.1 );
-    // compHead.add( computerBody.position, 'y', -60,  60, 0.1 );
-    // compHead.add( computerBody.position, 'z', -60,  60, 0.1 );
 });
 
 /************ Television ************/
