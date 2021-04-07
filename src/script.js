@@ -158,8 +158,7 @@ objLoader.load("./models/head/head.OBJ", model => {
     model.position.set( -12, 3.1, 40);
     model.rotation.reorder('YXZ')
     model.rotation.y = Math.PI * 0.05;
-    model.rotation.x = Math.PI * 1.75;
-    // model.rotateX(9);
+    model.rotation.x = Math.PI * 1.9;
     scene.add(model);
     if (DEBUG) {
         folderHead.add( head.rotation, 'x', 0,  Math.PI * 2, 0.0001 );
@@ -169,6 +168,20 @@ objLoader.load("./models/head/head.OBJ", model => {
         folderHead.add( head.position, 'y', -60,  60, 0.1 );
         folderHead.add( head.position, 'z', -60,  60, 0.1 );
     }
+
+    const headBody = new CANNON.Body();
+    headBody.mass = 0;
+    headBody.material = defaultMaterial;
+    const headShape = new CANNON.Sphere(7);
+    const neckShape = new CANNON.Box(new CANNON.Vec3(4.4, 3, 5));
+    const jawShape = new CANNON.Box(new CANNON.Vec3(5.5, 3, 6));
+    headBody.addShape(headShape,  new CANNON.Vec3(-1, 7, -1));
+    headBody.addShape(neckShape,  new CANNON.Vec3(-0.2, 0, 3));
+    headBody.addShape(jawShape,  new CANNON.Vec3(-0.2, 2, 5),
+    quaternion.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), - Math.PI / 2 * 0.3 ));
+    headBody.position.set(-11.8, 1.2, 37.1);
+
+    world.addBody(headBody);
 });
 
 /************ Computer ************/
@@ -184,7 +197,6 @@ objLoader.load("./models/computer/computer.OBJ", model => {
     computerBody.mass = 0;
     // computerBody.quaternion.setFromAxisAngle(new CANNON.Vec3(- 1, 0, 0), Math.PI * 0.5);
     // keep base terrain physic position in the same place por character and elements support
-    computerBody.position.set( 24.5, -0.1, 19.1);
     computerBody.material = defaultMaterial;
 
     const computerBaseShape = new CANNON.Box(new CANNON.Vec3(2.5, 1.5, 1.7));
@@ -212,9 +224,25 @@ let television;
 
 objLoader.load("./models/television/television.OBJ", model => {
     television = model;
-    model.scale.set(3, 3, 3);
+    model.scale.set(4, 4, 4);
     model.position.set( 2, -0.1, -20);
     scene.add(model);
+    const tvBody = new CANNON.Body();
+    tvBody.mass = 0;
+    tvBody.position.set(  2, -0.1, -20);
+    tvBody.material = defaultMaterial;
+    
+    const tvBox = new CANNON.Box(new CANNON.Vec3(2, 1.4, 1));
+    const tvLeg = new CANNON.Box(new CANNON.Vec3(0.1, 3.7, 0.1));
+
+    tvBody.addShape(tvBox, new CANNON.Vec3(0, 3.7, 0));
+    tvBody.addShape(tvLeg, new CANNON.Vec3(1.5, -0.1, 0.9), quaternion.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), -Math.PI / 2 * 0.05 ));
+    tvBody.addShape(tvLeg, new CANNON.Vec3(1.5, -0.1, -0.9), quaternion.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), Math.PI / 2 * 0.05 ));
+    tvBody.addShape(tvLeg, new CANNON.Vec3(-1.5, -0.1, 0.9), quaternion.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), -Math.PI / 2 * 0.05 ));
+    tvBody.addShape(tvLeg, new CANNON.Vec3(-1.5, -0.1, -0.9), quaternion.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), Math.PI / 2 * 0.05 ));
+
+    world.addBody(tvBody);
+
 });
 
 /************ Moon ************/
