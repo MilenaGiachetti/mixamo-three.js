@@ -391,7 +391,7 @@ const points = [
         element: document.querySelector("#point-0")
     },
     {
-        position: new THREE.Vector3(18, 3, 23), 
+        position: new THREE.Vector3(22, 3, 26.5), 
         element: document.querySelector("#point-1")
     },
     {

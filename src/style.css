@@ -217,7 +217,14 @@ html, body {
     color: #fff;
     line-height: 1.3;
     font-family: Helvetica, Arial, sans-serif;
-    font-size: 14px;
     opacity: 0;
     transition: opacity 0.3s;
+}
+
+.point .text h2 {
+    font-size: 16px;
+}
+
+.point .text p {
+    font-size: 14px;
 }
