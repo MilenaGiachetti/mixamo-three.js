@@ -44,16 +44,21 @@ const scene = new THREE.Scene();
 // Loading Manager
 const manager = new THREE.LoadingManager();
 manager.onLoad = function() {
-    // start animation loop & add eventListeners after loading
-    tick();
-    document.addEventListener("keydown", onDocumentKeyDown, false);
-    document.addEventListener("keyup", onDocumentKeyUp, false);
-    // hide loading screen
-    document.getElementById("loadingScreen").classList.add("fadeOut");
+    // Add start button
+    document.getElementById("startApp").classList.remove("fadeOut");
 };
 manager.onError = function(url) {
 	console.log('Error loading ' + url);
 };
+
+document.getElementById("startApp").addEventListener("click", ()=>{
+    // start animation loop & add eventListeners after loading
+    tick();
+    document.addEventListener("keydown", onDocumentKeyDown, false);
+    document.addEventListener("keyup", onDocumentKeyUp, false);
+    // hide loading screen    
+    document.getElementById("loadingScreen").classList.add("fadeOut");
+})
 
 // Physics
 const world = new CANNON.World();
