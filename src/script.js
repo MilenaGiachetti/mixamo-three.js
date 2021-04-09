@@ -482,6 +482,7 @@ function onDocumentKeyDown(event) {
                 let random = Math.floor(Math.random() * danceArray.length);
                 currentDance = danceArray[random];
                 animationActions[currentDance].play();
+                animationActions[currentDance].timeScale = 2/1;
             }
             modelState.dance = true;
             break;
