@@ -46,6 +46,7 @@ const manager = new THREE.LoadingManager();
 manager.onLoad = function() {
     // Add start button
     document.getElementById("startApp").classList.remove("fadeOut");
+    tick();
 };
 manager.onError = function(url) {
 	console.log('Error loading ' + url);
@@ -53,7 +54,6 @@ manager.onError = function(url) {
 
 document.getElementById("startApp").addEventListener("click", ()=>{
     // start animation loop & add eventListeners after loading
-    tick();
     document.addEventListener("keydown", onDocumentKeyDown, false);
     document.addEventListener("keyup", onDocumentKeyUp, false);
     // hide loading screen    
@@ -83,7 +83,7 @@ const heavyDefaultContactMaterial = new CANNON.ContactMaterial(
     defaultMaterial,
     {
         friction: 0.7,
-        restitution: 0.1
+        restitution: 0
     }
 );
 
@@ -120,15 +120,15 @@ gltfLoader.load("./models/mannequin/mannequin.glb", model => {
     }
 
     // Add mannequin physic object
-    const mannequinBase = new CANNON.Box(new CANNON.Vec3(0.35, 0.5, 0.35));
-    const mannequinObject = new CANNON.Sphere(0.5);
+    const mannequinBase = new CANNON.Box(new CANNON.Vec3(0.35, 1, 0.35));
+    const mannequinObject = new CANNON.Sphere(0.6);
     mannequinBody = new CANNON.Body({
-        mass: 50,
+        mass: 5,
         position: new CANNON.Vec3(0, 1, 0),
         material: heavyMaterial
     });
-    mannequinBody.addShape(mannequinObject, new CANNON.Vec3(0, 0.3, 0));
-    mannequinBody.addShape(mannequinBase, new CANNON.Vec3(0, -0.5, 0));
+    mannequinBody.addShape(mannequinObject, new CANNON.Vec3(0, -0.2, 0));
+    mannequinBody.addShape(mannequinBase, new CANNON.Vec3(0, 0, 0));
     mannequinBody.sleepSpeedLimit = 0.5;
     mannequinBody.angularDamping = 1;
     world.addBody(mannequinBody);
@@ -342,7 +342,7 @@ const createCrate = (width, height, depth, position, rotation, name) => {
     const shape = new CANNON.Box(new CANNON.Vec3(width * 0.5, height * 0.5, depth * 0.5));
 
     const body = new CANNON.Body({
-        mass: 1,
+        mass: 5,
         position: new CANNON.Vec3(0, 3, 0),
         shape: shape,
         material: heavyMaterial
