@@ -42,11 +42,21 @@ const canvas = document.querySelector('canvas.webgl');
 const scene = new THREE.Scene();
 
 // Loading Manager
+const loaderElement = document.querySelector('.loader');
 const manager = new THREE.LoadingManager();
 manager.onLoad = function() {
-    // Add start button
-    document.getElementById("startApp").classList.remove("fadeOut");
-    tick();
+    window.setTimeout(() => {
+        loaderElement.classList.add("loaded");
+        loaderElement.style.transform = ''
+        
+        // Add start button
+        document.getElementById("startApp").classList.add("fadeIn");
+        tick();
+    }, 500)
+};
+manager.onProgress = function(itemUrl, itemsLoaded, itemsTotal) {
+    const progressRatio = itemsLoaded / itemsTotal;
+    loaderElement.style.transform = `scaleX(${progressRatio})`;
 };
 manager.onError = function(url) {
 	console.log('Error loading ' + url);
