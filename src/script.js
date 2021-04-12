@@ -207,7 +207,6 @@ objLoader.load("./models/computer/computer.OBJ", model => {
     const computerScreenShape = new CANNON.Box(new CANNON.Vec3(2, 1.5, 1.5));
 
     computerBody.addShape(computerBaseShape);
-    computerBody.addShape(computerBaseShape);
     computerBody.addShape(computerStandShape, new CANNON.Vec3(0, 2, 0.1));
     computerBody.addShape(computerKeyboardShape, new CANNON.Vec3(0, 0, 2.7),
     quaternion.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), Math.PI / 2 * 0.1 ));
