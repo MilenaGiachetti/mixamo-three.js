@@ -7,8 +7,8 @@ import Stats from 'three/examples/jsm/libs/stats.module';
 import { Water } from 'three/examples/jsm/objects/Water.js';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import * as dat from 'dat.gui';
-import CANNON from 'cannon';
-// import CannonDebugRenderer from './utils/cannonDebugRenderer.js';
+import * as CANNON from 'cannon-es';
+import cannonDebugger from 'cannon-es-debugger';
 
 const DEBUG = window.location.hash === "#debug" ? true : false;
 
@@ -72,10 +72,10 @@ document.getElementById("startApp").addEventListener("click", ()=>{
 
 // Physics
 const world = new CANNON.World();
+cannonDebugger(scene, world.bodies)
 // world.allowSleep = true;
 world.broadphase = new CANNON.SAPBroadphase(world);
 world.gravity.set(0, - 9.82, 0);
-// const cannonDebugRenderer = new THREE.CannonDebugRenderer( scene, world );
 
 const defaultMaterial = new CANNON.Material('default');
 const defaultContactMaterial = new CANNON.ContactMaterial(
@@ -741,7 +741,6 @@ const tick = () => {
     if (DEBUG) {
         stats.update();
     }
-    // cannonDebugRenderer.update(); 
 
     // Move points
     for(const point of points) {
