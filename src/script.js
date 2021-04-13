@@ -80,11 +80,22 @@ const defaultContactMaterial = new CANNON.ContactMaterial(
         restitution: 0.3
     }
 );
+const heavyMaterial = new CANNON.Material('heavy');
+const heavyDefaultContactMaterial = new CANNON.ContactMaterial(
+    heavyMaterial,
+    defaultMaterial,
+    {
+        friction: 1,
+        restitution: 0.0,
+        contactEquationRelaxation: 3.75,
+    }
+);
 
 world.defaultContactMaterial.contactEquationStiffness = 1e6;
 world.defaultContactMaterial.contactEquationRegularizationTime = 3;
 
 world.addContactMaterial(defaultContactMaterial);
+world.addContactMaterial(heavyDefaultContactMaterial);
 
 /************ Models & animations ************/
 let mixer = null;
@@ -109,9 +120,9 @@ gltfLoader.load("./models/mannequin/mannequin.glb", model => {
     const mannequinBase = new CANNON.Box(new CANNON.Vec3(0.5, 1, 0.5));
     // const mannequinObject = new CANNON.Sphere(0.6);
     mannequinBody = new CANNON.Body({
-        mass: 50,
+        mass: 80,
         position: new CANNON.Vec3(0, 1, 0),
-        material: defaultMaterial
+        material: heavyMaterial
     });
     // mannequinBody.addShape(mannequinObject, new CANNON.Vec3(0, -0.2, 0));
     mannequinBody.addShape(mannequinBase, new CANNON.Vec3(0, 0, 0));
@@ -444,6 +455,7 @@ function onDocumentKeyDown(event) {
                 modelState.jump = true;
                 animationActions.jump.weight = 1;
                 animationActions.jump.timeScale = 0.75/1;
+                animationActions.jump.startAt(2);
                 animationActions.jump.play();
             }
             break;
@@ -546,10 +558,6 @@ function onDocumentKeyUp(event) {
 
 function goToIdle(animation) {
     if(animationActions[animation] && animationActions[animation].weight > 0) {
-        if(animation == "jump") {
-            animationActions[animation].weight -= 0.01;
-            return;
-        }
         animationActions[animation].weight -= 0.2;
     } else if (animationActions[animation]) {
         animationActions[animation].stop;
@@ -586,7 +594,7 @@ function updateMannequin() {
         } else {
             mannequinBody.position.y += 0.25;
         } 
-    } else if (animationActions.jump.weight > 0) {
+    } else if (mannequinBody.position.y < 2 && animationActions.jump.weight > 0) {
         goToIdle("jump");
     }
 
@@ -750,7 +758,7 @@ if (DEBUG) {
     stats = Stats();
     document.body.appendChild(stats.dom);
     cannonDebugger(scene, world.bodies);
-    
+
     const folderMoon = gui.addFolder( 'Moon' );
     folderMoon.add( moonMaterial, 'emissiveIntensity', 0, 5, 0.1 );
     folderMoon.addColor(debugObject, 'moonLightColor').onChange(() => {moonMaterial.emissive.set(debugObject.moonLightColor)});
