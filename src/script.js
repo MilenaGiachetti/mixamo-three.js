@@ -21,11 +21,6 @@ const debugObject = {
 
 let gui,
     stats;
-if (DEBUG) {
-    gui = new dat.GUI();
-    stats = Stats();
-    document.body.appendChild(stats.dom);
-}
 
 // Control instructions
 document.getElementById("controlsOpen").addEventListener("click", ()=>{
@@ -72,8 +67,7 @@ document.getElementById("startApp").addEventListener("click", ()=>{
 
 // Physics
 const world = new CANNON.World();
-cannonDebugger(scene, world.bodies)
-// world.allowSleep = true;
+world.solver.iterations = 20;
 world.broadphase = new CANNON.SAPBroadphase(world);
 world.gravity.set(0, - 9.82, 0);
 
@@ -83,32 +77,14 @@ const defaultContactMaterial = new CANNON.ContactMaterial(
     defaultMaterial,
     {
         friction: 0.1,
-        restitution: 0.7
+        restitution: 0.3
     }
 );
 
-const heavyMaterial = new CANNON.Material('heavy');
-const heavyDefaultContactMaterial = new CANNON.ContactMaterial(
-    heavyMaterial,
-    defaultMaterial,
-    {
-        friction: 0.7,
-        restitution: 0
-    }
-);
-
-const heavyHeavyContactMaterial = new CANNON.ContactMaterial(
-    heavyMaterial,
-    heavyMaterial,
-    {
-        friction: 1,
-        restitution: 0
-    }
-);
+world.defaultContactMaterial.contactEquationStiffness = 1e6;
+world.defaultContactMaterial.contactEquationRegularizationTime = 3;
 
 world.addContactMaterial(defaultContactMaterial);
-world.addContactMaterial(heavyDefaultContactMaterial);
-world.addContactMaterial(heavyHeavyContactMaterial);
 
 /************ Models & animations ************/
 let mixer = null;
@@ -130,30 +106,23 @@ gltfLoader.load("./models/mannequin/mannequin.glb", model => {
     }
 
     // Add mannequin physic object
-    const mannequinBase = new CANNON.Box(new CANNON.Vec3(0.35, 1, 0.35));
-    const mannequinObject = new CANNON.Sphere(0.6);
+    const mannequinBase = new CANNON.Box(new CANNON.Vec3(0.5, 1, 0.5));
+    // const mannequinObject = new CANNON.Sphere(0.6);
     mannequinBody = new CANNON.Body({
-        mass: 5,
+        mass: 50,
         position: new CANNON.Vec3(0, 1, 0),
-        material: heavyMaterial
+        material: defaultMaterial
     });
-    mannequinBody.addShape(mannequinObject, new CANNON.Vec3(0, -0.2, 0));
+    // mannequinBody.addShape(mannequinObject, new CANNON.Vec3(0, -0.2, 0));
     mannequinBody.addShape(mannequinBase, new CANNON.Vec3(0, 0, 0));
-    mannequinBody.sleepSpeedLimit = 0.5;
     mannequinBody.angularDamping = 1;
     world.addBody(mannequinBody);
-
     scene.add(mannequin);
 });
 
 /************ Head ************/
 let head;
 const objLoader = new OBJLoader(manager);
-
-let folderHead;
-if (DEBUG) {
-    folderHead = gui.addFolder( 'Head' );
-}
 
 objLoader.load("./models/head/head.OBJ", model => {
     head = model;
@@ -164,15 +133,6 @@ objLoader.load("./models/head/head.OBJ", model => {
     model.rotation.y = Math.PI * 0.05;
     model.rotation.x = Math.PI * 1.9;
     scene.add(model);
-    if (DEBUG) {
-        folderHead.add( head.rotation, 'x', 0,  Math.PI * 2, 0.0001 );
-        folderHead.add( head.rotation, 'y', 0,  Math.PI * 2, 0.0001 );
-        folderHead.add( head.rotation, 'z', 0,  Math.PI * 2, 0.0001 );
-        folderHead.add( head.position, 'x', -60,  60, 0.1 );
-        folderHead.add( head.position, 'y', -60,  60, 0.1 );
-        folderHead.add( head.position, 'z', -60,  60, 0.1 );
-    }
-
     const headBody = new CANNON.Body();
     headBody.mass = 0;
     headBody.material = defaultMaterial;
@@ -184,7 +144,6 @@ objLoader.load("./models/head/head.OBJ", model => {
     headBody.addShape(jawShape,  new CANNON.Vec3(-0.2, 2, 5),
     quaternion.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), - Math.PI / 2 * 0.3 ));
     headBody.position.set(-11.8, 1.2, 37.1);
-
     world.addBody(headBody);
 });
 
@@ -215,7 +174,6 @@ objLoader.load("./models/computer/computer.OBJ", model => {
     computer.rotation.y = - Math.PI * 0.75;
     computerBody.position.set(23 , -0.1, 27.5);
     computerBody.quaternion.copy(computer.quaternion);
-
     world.addBody(computerBody);
 });
 
@@ -240,7 +198,6 @@ objLoader.load("./models/television/television.OBJ", model => {
     tvBody.addShape(tvLeg, new CANNON.Vec3(1.5, -0.1, -0.9), quaternion.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), Math.PI / 2 * 0.05 ));
     tvBody.addShape(tvLeg, new CANNON.Vec3(-1.5, -0.1, 0.9), quaternion.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), -Math.PI / 2 * 0.05 ));
     tvBody.addShape(tvLeg, new CANNON.Vec3(-1.5, -0.1, -0.9), quaternion.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), Math.PI / 2 * 0.05 ));
-
     world.addBody(tvBody);
 
 });
@@ -354,10 +311,9 @@ const createCrate = (width, height, depth, position, rotation, name) => {
         mass: 5,
         position: new CANNON.Vec3(0, 3, 0),
         shape: shape,
-        material: heavyMaterial
+        material: defaultMaterial
     });
     body.position.copy(position);
-    body.sleepSpeedLimit = 0.5;
     body.quaternion.copy(mesh.quaternion);
     world.addBody(body);
 
@@ -790,6 +746,11 @@ function updateSun() {
 updateSun();
 
 if (DEBUG) {
+    gui = new dat.GUI();
+    stats = Stats();
+    document.body.appendChild(stats.dom);
+    cannonDebugger(scene, world.bodies);
+    
     const folderMoon = gui.addFolder( 'Moon' );
     folderMoon.add( moonMaterial, 'emissiveIntensity', 0, 5, 0.1 );
     folderMoon.addColor(debugObject, 'moonLightColor').onChange(() => {moonMaterial.emissive.set(debugObject.moonLightColor)});
