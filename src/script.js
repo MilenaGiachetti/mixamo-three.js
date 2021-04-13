@@ -13,23 +13,6 @@ import cannonDebugger from 'cannon-es-debugger';
 const DEBUG = window.location.hash === "#debug" ? true : false;
 
 /************ Base ************/
-// Debug
-const debugObject = {
-    islandColor: '#000f20',
-    moonLightColor: '#c3002d'
-};
-
-let gui,
-    stats;
-
-// Control instructions
-document.getElementById("controlsOpen").addEventListener("click", ()=>{
-    document.getElementById("controlsPanel").classList.remove("fadeOut");
-})
-document.getElementById("controlsClose").addEventListener("click", ()=>{
-    document.getElementById("controlsPanel").classList.add("fadeOut");
-})
-
 // Canvas
 const canvas = document.querySelector('canvas.webgl');
 
@@ -41,15 +24,17 @@ const loaderElement = document.querySelector('.loader');
 const manager = new THREE.LoadingManager();
 manager.onLoad = function() {
     window.setTimeout(() => {
+        // Hide loading bar
         loaderElement.classList.add("loaded");
         loaderElement.style.transform = ''
-        
         // Add start button
         document.getElementById("startApp").classList.add("fadeIn");
+        // Initialize animation
         tick();
     }, 500)
 };
 manager.onProgress = function(itemUrl, itemsLoaded, itemsTotal) {
+    // Update loading bar
     const progressRatio = itemsLoaded / itemsTotal;
     loaderElement.style.transform = `scaleX(${progressRatio})`;
 };
@@ -58,19 +43,37 @@ manager.onError = function(url) {
 };
 
 document.getElementById("startApp").addEventListener("click", ()=>{
-    // start animation loop & add eventListeners after loading
+    // Add eventListeners after loading
     document.addEventListener("keydown", onDocumentKeyDown, false);
     document.addEventListener("keyup", onDocumentKeyUp, false);
-    // hide loading screen    
+    // Hide loading screen    
     document.getElementById("loadingScreen").classList.add("fadeOut");
 })
 
-// Physics
+// Debug
+const debugObject = {
+    islandColor: '#000f20',
+    moonLightColor: '#c3002d'
+};
+let gui,
+    stats;
+
+// Control instructions
+document.getElementById("controlsOpen").addEventListener("click", ()=>{
+    document.getElementById("controlsPanel").classList.remove("fadeOut");
+})
+document.getElementById("controlsClose").addEventListener("click", ()=>{
+    document.getElementById("controlsPanel").classList.add("fadeOut");
+})
+
+/************ Physics ************/
+// World - general
 const world = new CANNON.World();
 world.solver.iterations = 20;
 world.broadphase = new CANNON.SAPBroadphase(world);
 world.gravity.set(0, - 9.82, 0);
 
+// Contacts
 const defaultMaterial = new CANNON.Material('default');
 const defaultContactMaterial = new CANNON.ContactMaterial(
     defaultMaterial,
@@ -80,6 +83,9 @@ const defaultContactMaterial = new CANNON.ContactMaterial(
         restitution: 0.3
     }
 );
+world.defaultContactMaterial.contactEquationStiffness = 1e6;
+world.defaultContactMaterial.contactEquationRegularizationTime = 3;
+
 const heavyMaterial = new CANNON.Material('heavy');
 const heavyDefaultContactMaterial = new CANNON.ContactMaterial(
     heavyMaterial,
@@ -90,37 +96,31 @@ const heavyDefaultContactMaterial = new CANNON.ContactMaterial(
         contactEquationRelaxation: 3.75,
     }
 );
-
-world.defaultContactMaterial.contactEquationStiffness = 1e6;
-world.defaultContactMaterial.contactEquationRegularizationTime = 3;
-
 world.addContactMaterial(defaultContactMaterial);
 world.addContactMaterial(heavyDefaultContactMaterial);
 
-/************ Models & animations ************/
+/************ Mannequin & animations ************/
 let mixer = null;
 let animationActions = {};
 let mannequin = null;
 let mannequinBody = null;
 
-// Mannequin
 const gltfLoader = new GLTFLoader(manager);
-
 gltfLoader.load("./models/mannequin/mannequin.glb", model => {
+    // Mannequin - MODEL THREE
     mannequin = model.scene;
-    mixer = new THREE.AnimationMixer(mannequin);
     // Mannequin animations
+    mixer = new THREE.AnimationMixer(mannequin);
     for(const animation of model.animations){
         let animationAction = mixer.clipAction(animation);
         animationActions[animation.name] = animationAction;
         animationActions[animation.name].clampWhenFinished = true;
     }
 
-    // Add mannequin physic object
+    // Mannequin - PHYSICS BODY
     const mannequinBase = new CANNON.Cylinder(0.6, 0.6, 1, 8);
     const mannequinBottom = new CANNON.Sphere(0.6);
     const mannequinTop = new CANNON.Sphere(0.6);
-
     mannequinBody = new CANNON.Body({
         mass: 80,
         position: new CANNON.Vec3(0, 1, 0),
@@ -129,7 +129,6 @@ gltfLoader.load("./models/mannequin/mannequin.glb", model => {
     mannequinBody.addShape(mannequinBase);
     mannequinBody.addShape(mannequinBottom, new CANNON.Vec3(0, -0.4, 0));
     mannequinBody.addShape(mannequinTop, new CANNON.Vec3(0, 0.4, 0));
-
     mannequinBody.angularDamping = 1;
     world.addBody(mannequinBody);
     scene.add(mannequin);
@@ -140,6 +139,7 @@ let head;
 const objLoader = new OBJLoader(manager);
 
 objLoader.load("./models/head/head.OBJ", model => {
+    // Head - MODEL THREE
     head = model;
     model.children[0].material.color = new THREE.Color("#fff2ff");
     model.scale.set(3, 2.5, 3);
@@ -148,6 +148,7 @@ objLoader.load("./models/head/head.OBJ", model => {
     model.rotation.y = Math.PI * 0.05;
     model.rotation.x = Math.PI * 1.9;
     scene.add(model);
+    // Head - PHYSICS BODY
     const headBody = new CANNON.Body();
     headBody.mass = 0;
     headBody.material = defaultMaterial;
@@ -167,25 +168,24 @@ let computer;
 const quaternion = new THREE.Quaternion();
 
 objLoader.load("./models/computer/computer.OBJ", model => {
+    // Computer - MODEL THREE
     computer = model;
     model.scale.set(0.1, 0.1, 0.1);
     model.position.set( 22, -0.1, 23);
     scene.add(model);
+    // Computer - PHYSICS BODY
     const computerBody = new CANNON.Body();
     computerBody.mass = 0;
     computerBody.material = defaultMaterial;
-
     const computerBaseShape = new CANNON.Box(new CANNON.Vec3(2.5, 1.5, 1.7));
     const computerStandShape = new CANNON.Box(new CANNON.Vec3(0.7, 0.5, 0.8));
     const computerKeyboardShape = new CANNON.Box(new CANNON.Vec3(2.5, 0.3, 1.2));
     const computerScreenShape = new CANNON.Box(new CANNON.Vec3(2, 1.5, 1.5));
-
     computerBody.addShape(computerBaseShape);
     computerBody.addShape(computerStandShape, new CANNON.Vec3(0, 2, 0.1));
     computerBody.addShape(computerKeyboardShape, new CANNON.Vec3(0, 0, 2.7),
     quaternion.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), Math.PI / 2 * 0.1 ));
     computerBody.addShape(computerScreenShape, new CANNON.Vec3(0, 4, -0.4));
-
     computer.rotation.y = - Math.PI * 0.75;
     computerBody.position.set(23 , -0.1, 27.5);
     computerBody.quaternion.copy(computer.quaternion);
@@ -196,32 +196,30 @@ objLoader.load("./models/computer/computer.OBJ", model => {
 let television;
 
 objLoader.load("./models/television/television.OBJ", model => {
+    // Television - MODEL THREE
     television = model;
     model.scale.set(4, 4, 4);
     model.position.set( 2, -0.1, -20);
     scene.add(model);
+    // Television - PHYSICS BODY
     const tvBody = new CANNON.Body();
     tvBody.mass = 0;
     tvBody.position.set(  2, -0.1, -20);
     tvBody.material = defaultMaterial;
-    
     const tvBox = new CANNON.Box(new CANNON.Vec3(2, 1.4, 1));
     const tvLeg = new CANNON.Box(new CANNON.Vec3(0.1, 3.7, 0.1));
-
     tvBody.addShape(tvBox, new CANNON.Vec3(0, 3.7, 0));
     tvBody.addShape(tvLeg, new CANNON.Vec3(1.5, -0.1, 0.9), quaternion.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), -Math.PI / 2 * 0.05 ));
     tvBody.addShape(tvLeg, new CANNON.Vec3(1.5, -0.1, -0.9), quaternion.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), Math.PI / 2 * 0.05 ));
     tvBody.addShape(tvLeg, new CANNON.Vec3(-1.5, -0.1, 0.9), quaternion.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), -Math.PI / 2 * 0.05 ));
     tvBody.addShape(tvLeg, new CANNON.Vec3(-1.5, -0.1, -0.9), quaternion.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), Math.PI / 2 * 0.05 ));
     world.addBody(tvBody);
-
 });
 
 /************ Moon ************/
 const textureLoader = new THREE.TextureLoader(manager)
 const colorTexture = textureLoader.load('./textures/moon/moon_color.jpg')
 const normalTexture = textureLoader.load('./textures/moon/moon_norm.jpg')
-
 const moonGeometry = new THREE.SphereGeometry( 12, 32, 32 );
 const moonMaterial = new THREE.MeshStandardMaterial( {map: colorTexture, normalMap: normalTexture, emissive: debugObject.moonLightColor, emissiveIntensity: 0.2 } );
 const moon = new THREE.Mesh( moonGeometry, moonMaterial );
@@ -237,7 +235,6 @@ sky.scale.setScalar( 10000 );
 scene.add( sky );
 
 const skyUniforms = sky.material.uniforms;
-
 skyUniforms[ 'turbidity' ].value = 10;
 skyUniforms[ 'rayleigh' ].value = 2;
 skyUniforms[ 'mieCoefficient' ].value = 0.005;
@@ -251,16 +248,13 @@ const parameters = {
 /************ Sea ************/
 // Water
 const waterGeometry = new THREE.PlaneGeometry( 250, 250 );
-
 let water = new Water(
     waterGeometry,
     {
         textureWidth: 512,
         textureHeight: 512,
         waterNormals: textureLoader.load( './textures/waternormals.jpg', function ( texture ) {
-
             texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-
         } ),
         alpha: 1.0,
         sunDirection: new THREE.Vector3(),
@@ -270,25 +264,22 @@ let water = new Water(
         fog: scene.fog !== undefined
     }
 );
-
 water.rotation.x = - Math.PI / 2;
-
 scene.add( water );
-
 const waterUniforms = water.material.uniforms;
 
 
 /************ Island ************/
 const islandDisplacementTexture = textureLoader.load('./textures/terrain/displacement.png')
-
+// Island - THREE
 const islandGeometry = new THREE.PlaneGeometry(500, 500, 250, 250);
 const islandMaterial = new THREE.MeshStandardMaterial({color: debugObject.islandColor, displacementMap: islandDisplacementTexture, displacementScale: 100});
 const island = new THREE.Mesh(islandGeometry, islandMaterial);
 island.rotation.x = - Math.PI * 0.5;
 island.position.y = - 20;
 scene.add(island);
-
-const islandShape = new CANNON.Plane() // plano infinito
+// Island - PHYSICS BODY
+const islandShape = new CANNON.Plane() // infinite plane
 const islandBody = new CANNON.Body()
 islandBody.mass = 0;
 islandBody.quaternion.setFromAxisAngle(new CANNON.Vec3(- 1, 0, 0), Math.PI * 0.5);
@@ -310,7 +301,7 @@ const boxMaterial = new THREE.MeshStandardMaterial({map: boxColorTexture, normal
 
 let objectsToUpdate = [];
 const createCrate = (width, height, depth, position, rotation, name) => {
-    // Three.js mesh
+    // Crate - Three.js mesh
     const mesh = new THREE.Mesh(boxGeometry, boxMaterial);
     mesh.scale.set(width, height, depth);
     mesh.rotation.y = rotation * Math.PI;
@@ -319,9 +310,8 @@ const createCrate = (width, height, depth, position, rotation, name) => {
     mesh.position.copy(position);
     scene.add(mesh);
 
-    // Cannon.js body
+    // Crate - Cannon.js body
     const shape = new CANNON.Box(new CANNON.Vec3(width * 0.5, height * 0.5, depth * 0.5));
-
     const body = new CANNON.Body({
         mass: 5,
         position: new CANNON.Vec3(0, 3, 0),
@@ -338,18 +328,16 @@ const createCrate = (width, height, depth, position, rotation, name) => {
 
 // Sphere - ball
 const sphereGeometry = new THREE.SphereGeometry(1, 16, 16);
-
 const createSphere = (radius, position, name) => {
-    // Three.js mesh
+    // Ball - Three.js mesh
     const mesh = new THREE.Mesh(sphereGeometry, moonMaterial)
     mesh.scale.set(radius, radius, radius)
     mesh.position.copy(position)
     mesh.name = name;
     scene.add(mesh)
 
-    // Cannon.js body
+    // Ball - Cannon.js body
     const shape = new CANNON.Sphere(radius)
-
     const body = new CANNON.Body({
         mass: 1,
         position: new CANNON.Vec3(0, 3, 0),
@@ -363,7 +351,7 @@ const createSphere = (radius, position, name) => {
     objectsToUpdate.push({ mesh, body });
 }
 
-for (let i = 0; i < 20; i++){
+for (let i = 0; i < 30; i++){
     let crateSizeVariation = Math.random() * (1.3 - 1) + 1;
     createCrate(crateSizeVariation, crateSizeVariation, crateSizeVariation, { x: Math.random() * 100 - 50, y:  0.4, z: Math.random() * 100 - 50}, Math.random(), `Crate ${i}` );
     createSphere(Math.random() + 0.2, { x: Math.random() * 100 - 50, y:  0.5, z: Math.random() * 100 - 50}, `Ball ${i}` )
@@ -673,20 +661,22 @@ const tick = () => {
     const deltaTime = elapsedTime - previousTime;
     previousTime = elapsedTime;
 
+    // Update water
     water.material.uniforms[ 'time' ].value += 1.0 / (60.0 * 3);
 
+    // Update mannequin
     if(mixer) {
         mixer.update(deltaTime);
         // Model update
         updateMannequin();
     }
 
-    // Update camera
+    // Update mannequin physics & camera
     if(mannequin) {
         // Update physics
         world.step(1 / 60, deltaTime, 3);
         mannequin.position.set(mannequinBody.position.x, mannequinBody.position.y - 1.0, mannequinBody.position.z);
-
+        // Update camera
         if(modelState.autoCamera) {
             let angle = - (mannequin.rotation.y + Math.PI * 0.5);
             if (modelState.backward){
@@ -701,11 +691,13 @@ const tick = () => {
         }
     }
 
+    // Update crates and balls physics 
     for(const object of objectsToUpdate) {
         object.mesh.position.copy(object.body.position);
         object.mesh.quaternion.copy(object.body.quaternion);
     }
 
+    // Update stats
     if (DEBUG) {
         stats.update();
     }
@@ -713,16 +705,13 @@ const tick = () => {
     // Move points
     for(const point of points) {
         const screenPosition = point.position.clone();
-        
         frustum.setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));  
         if (frustum.containsPoint(screenPosition)) {
             point.element.classList.add('visible');
         } else {
             point.element.classList.remove('visible');
         }
-
         screenPosition.project(camera);
-
         const translateX = screenPosition.x * sizes.width * 0.5;
         const translateY = - screenPosition.y * sizes.height * 0.5;
         point.element.style.transform = `translate(${translateX}px, ${translateY}px)`;
@@ -738,25 +727,19 @@ const tick = () => {
 
 /************ update sun ************/
 const pmremGenerator = new THREE.PMREMGenerator( renderer );
-
 function updateSun() {
-
     const theta = Math.PI * ( parameters.inclination - 0.5 );
     const phi = 2 * Math.PI * ( parameters.azimuth - 0.5 );
-
     sun.x = Math.cos( phi );
     sun.y = Math.sin( phi ) * Math.sin( theta );
     sun.z = Math.sin( phi ) * Math.cos( theta );
-
     sky.material.uniforms[ 'sunPosition' ].value.copy( sun );
     water.material.uniforms[ 'sunDirection' ].value.copy( sun ).normalize();
-
     scene.environment = pmremGenerator.fromScene( sky ).texture;
-
 }
-
 updateSun();
 
+/************ debug ************/
 if (DEBUG) {
     gui = new dat.GUI();
     stats = Stats();
