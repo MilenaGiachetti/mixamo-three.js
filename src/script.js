@@ -425,6 +425,7 @@ let modelState = {
 
 const danceArray = ['macarena', "wave", "swing"];
 let currentDance = null;
+let jumpInitialHeight = null;
 
 function onDocumentKeyDown(event) {
     var keyCode = event.which;
@@ -444,6 +445,7 @@ function onDocumentKeyDown(event) {
         //     break;
         case 32: // spacebar - jump
             if(mannequin.position.y < 1) {
+                jumpInitialHeight = mannequin.position.y;
                 modelState.jump = true;
                 animationActions.jump.weight = 1;
                 animationActions.jump.timeScale = 0.75/1;
@@ -550,6 +552,10 @@ function onDocumentKeyUp(event) {
 
 function goToIdle(animation) {
     if(animationActions[animation] && animationActions[animation].weight > 0) {
+        if(animation == "jump") {
+            animationActions[animation].weight -= 0.02;
+            return;
+        }
         animationActions[animation].weight -= 0.2;
     } else if (animationActions[animation]) {
         animationActions[animation].stop;
@@ -581,12 +587,12 @@ function updateMannequin() {
     if(modelState.jump){
         animationActions.running.weight = 0;
         animationActions.walking.weight = 0;
-        if (mannequinBody.position.y > 5) {
+        if (mannequinBody.position.y > jumpInitialHeight + 5) {
             modelState.jump = false;
         } else {
             mannequinBody.position.y += 0.25;
         } 
-    } else if (mannequinBody.position.y < 2 && animationActions.jump.weight > 0) {
+    } else if (animationActions.jump.weight > 0) {
         goToIdle("jump");
     }
 
