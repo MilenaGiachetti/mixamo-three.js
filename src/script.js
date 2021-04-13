@@ -117,15 +117,19 @@ gltfLoader.load("./models/mannequin/mannequin.glb", model => {
     }
 
     // Add mannequin physic object
-    const mannequinBase = new CANNON.Box(new CANNON.Vec3(0.5, 1, 0.5));
-    // const mannequinObject = new CANNON.Sphere(0.6);
+    const mannequinBase = new CANNON.Cylinder(0.6, 0.6, 1, 8);
+    const mannequinBottom = new CANNON.Sphere(0.6);
+    const mannequinTop = new CANNON.Sphere(0.6);
+
     mannequinBody = new CANNON.Body({
         mass: 80,
         position: new CANNON.Vec3(0, 1, 0),
         material: heavyMaterial
     });
-    // mannequinBody.addShape(mannequinObject, new CANNON.Vec3(0, -0.2, 0));
-    mannequinBody.addShape(mannequinBase, new CANNON.Vec3(0, 0, 0));
+    mannequinBody.addShape(mannequinBase);
+    mannequinBody.addShape(mannequinBottom, new CANNON.Vec3(0, -0.4, 0));
+    mannequinBody.addShape(mannequinTop, new CANNON.Vec3(0, 0.4, 0));
+
     mannequinBody.angularDamping = 1;
     world.addBody(mannequinBody);
     scene.add(mannequin);
@@ -148,7 +152,7 @@ objLoader.load("./models/head/head.OBJ", model => {
     headBody.mass = 0;
     headBody.material = defaultMaterial;
     const headShape = new CANNON.Sphere(7);
-    const neckShape = new CANNON.Box(new CANNON.Vec3(4.4, 3, 5));
+    const neckShape = new CANNON.Cylinder(6, 5, 3, 12);
     const jawShape = new CANNON.Box(new CANNON.Vec3(5.5, 3, 6));
     headBody.addShape(headShape,  new CANNON.Vec3(-1, 7, -1));
     headBody.addShape(neckShape,  new CANNON.Vec3(-0.2, 0, 3));
