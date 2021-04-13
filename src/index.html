@@ -7,7 +7,7 @@
 </head>
 <body>
     <canvas class="webgl"></canvas>
-    <section id="loadingScreen">
+    <section id="loadingScreen" class="loadingScreen">
         <div class="instructions">
             <h2>CONTROLS</h2>
             <p>WASD or ARROW keys - Move</p>
@@ -19,8 +19,8 @@
         <div class="loader"></div>
         <button type="button" class="primaryBtn" id="startApp">START</button>
     </section>
-    <button type="button" id="controlsOpen">i</button>
-    <section id="controlsPanel" class="fadeOut">
+    <button type="button" id="controlsOpen" class="controlsOpen" tabindex="-1">i</button>
+    <section id="controlsPanel" class="controlsPanel fadeOut">
         <div class="modal"> 
             <div class="instructions">
                 <h2>CONTROLS</h2>
