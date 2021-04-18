@@ -24,6 +24,10 @@ h2 {
     font-size: 2rem;
 }
 
+.hidden {
+    display: none;
+}
+
 /* button */
 .primaryBtn {
     -webkit-appearance: none;
@@ -56,6 +60,42 @@ h2 {
     z-index: unset;
 }
 
+/*********************** NOT SUPPORTED SCREEN ***********************/
+.notSupported.hidden {
+    display: none;
+}
+
+.notSupported .info {
+    border: 2px solid #EFE6DD;
+    border-radius: 50%;
+    height: 4rem;
+    line-height: 4rem;
+    margin-bottom: 3rem;
+    text-align: center;
+    width: 4rem;
+} 
+
+.notSupported p {
+    margin-bottom: 1rem;
+    max-width: 100%;
+    text-align: center;
+}
+
+.browsers {
+    display: flex;
+    flex-flow: row nowrap;
+    margin: 3rem 0;
+}
+
+.browser {
+    text-align: center;
+    width: 10rem;
+}
+
+.browser p i {
+    font-size: 3rem;
+}
+
 /*********************** CANVAS ***********************/
 .webgl {
     left: 0;
@@ -65,10 +105,10 @@ h2 {
 }
 
 /*********************** LOADING SCREEN SECTION ***********************/
-.loadingScreen {
+.loadingScreen, .notSupported {
     align-items: center;
 	background-color: #000;
-    color: #fff;
+    color: #EFE6DD;
     display: flex;
     flex-flow: column wrap;
 	height: 100%;
@@ -155,7 +195,7 @@ h2 {
 .controlsPanel .modal {
     background-color: rgba(0, 0, 0, 0.8);
     border-radius: 0.5rem;
-    color: #fff;
+    color: #EFE6DD;
     margin: auto;
     padding: 2rem 4rem;
     text-align: center;
@@ -184,7 +224,7 @@ h2 {
 .point .label {
     background: rgba(0, 0, 0, 0.5);
     border-radius: 50%;
-    color: #fff;
+    color: #EFE6DD;
     cursor: help;
     height: 3rem;
     left: -1.5rem;
@@ -199,7 +239,7 @@ h2 {
 
 .point .text {
     background: rgba(0, 0, 0, 0.5);
-    color: #fff;
+    color: #EFE6DD;
     font-family: Helvetica, Arial, sans-serif;
     left: -12.5rem;
     line-height: 1.3;
@@ -219,3 +259,13 @@ h2 {
 .point .text p {
     font-size: 1.4rem;
 }
+
+@media (max-width: 50rem) {
+    .browsers {
+        flex-flow: column nowrap;
+    }    
+    .browser {
+        width: 100%;
+    }
+}
+  
